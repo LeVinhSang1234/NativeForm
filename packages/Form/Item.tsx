@@ -58,32 +58,19 @@ class Item extends Component<
   UNSAFE_componentWillReceiveProps(
     nProps: IItemProps & {form: any; errors: IError},
   ) {
-    const {name, errors, form} = this.props;
-    if (name !== nProps.name) {
-      delete errors[name];
-      delete form.ref[name];
-      delete form.value[name];
-      delete form.touched[name];
+    const {name} = this.props;
+    if (name !== nProps.name && nProps.name) {
+      const valueState = nProps.value || nProps.defaultValue;
       this.handleRemapItem(nProps);
-      this.setState({
-        valueState: {
-          value: nProps.value || nProps.defaultValue,
-          error: undefined,
-        },
-        initialValues: {
-          value: nProps.value || nProps.defaultValue,
-          error: undefined,
-        },
-      });
+      if (nProps.validateFirst) {
+        nProps.form.ref?.[nProps.name]?.(valueState);
+      } else {
+        this.setState({
+          valueState: {value: valueState, error: undefined},
+          initialValues: {value: valueState, error: undefined},
+        });
+      }
     }
-  }
-
-  componentWillUnmount() {
-    const {name, form, errors} = this.props;
-    delete errors[name];
-    delete form.ref[name];
-    delete form.value[name];
-    delete form.touched[name];
   }
 
   handleRemapItem = (props: IItemProps & {form: any; errors: IError}) => {

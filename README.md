@@ -109,10 +109,9 @@ Function(fieldName: string) => boolean
 
 ```
 
-## Form.Item 
-``
-!must be inside the Form
-``
+## Form.Item
+
+`!must be inside the Form`
 
 #### defaultValue
 
@@ -138,18 +137,21 @@ field value
 
 Validation Rules
 
-``
-whitespace?: treat required fields that only contain whitespace as errors;
-required?: indicates whether field is required;
-message?: validation error message;
-validator?: custom validate function (Note: callback must be called)
+- whitespace?: treat required fields that only contain whitespace as errors;
+
+- required?: indicates whether field is required;
+
+- message?: validation error message;
+
+- validator?: custom validate function (Note: callback must be called)
 
 ```
+
 Function(value: any, callback: (messageError?: any) => any, touched?: boolean) => any;
+
 ```
 
-trigger?: 'onChange' | 'blur';
-``
+- trigger?: 'onChange' | 'blur';
 
 #### validateFirst
 
@@ -183,7 +185,7 @@ wrapperCol: {
 
 import React, {useCallback} from 'react';
 import {Button, SafeAreaView, StyleSheet, TextInput} from 'react-native';
-import Form from '@sang1102/react-native-form';
+import Form from '@form-rn/form';
 
 const App = () => {
   const validator = useCallback((value, callback, touched) => {
@@ -262,7 +264,7 @@ export default App;
 
 import React, {Component} from 'react';
 import {Button, SafeAreaView, StyleSheet, TextInput} from 'react-native';
-import Form from '@sang1102/react-native-form';
+import Form from '@form-rn/form';
 
 class App extends Component {
   validator = (value, callback, touched) => {

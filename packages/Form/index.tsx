@@ -1,4 +1,4 @@
-import React, {Component, ReactChild, useRef} from 'react';
+import React, {Component, ReactChild, useEffect, useRef} from 'react';
 import {View, NativeEventEmitter} from 'react-native';
 import Item from './Item';
 import {
@@ -14,18 +14,14 @@ import {
 
 const characters =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-export function random(length: number = 16) {
-  let result = '';
-  var charactersLength = characters.length;
-  for (var i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+function random(r = 16) {
+  let a = '';
+  for (var t = characters.length, c = 0; c < r; c++) {
+    a += characters.charAt(Math.floor(Math.random() * t));
   }
-  return result;
+  return a;
 }
-
 const uuid: string = random(26);
-
 const formControl: IForm = {
   [uuid]: {
     ref: {},
@@ -342,11 +338,21 @@ Form.useForm = (): IFormHandle & {uid: string} => {
   };
 };
 
-Form.Item = (props: IItemProps) => {
+const ItemForm = (props: IItemProps) => {
   const newProps: any = props;
-  const {form} = newProps;
+  const {form, name: nameProps} = newProps;
   const uid = form?.uid || uuid;
   const formControlItem: any = formControl[uid];
+
+  useEffect(() => {
+    return () => {
+      delete errors[nameProps];
+      delete form?.ref[nameProps];
+      delete form?.value[nameProps];
+      delete form?.touched[nameProps];
+    };
+  }, [form?.ref, form?.touched, form?.value, nameProps]);
+
   return (
     <Item
       {...props}
@@ -374,6 +380,8 @@ Form.Item = (props: IItemProps) => {
     />
   );
 };
+
+Form.Item = ItemForm;
 
 Form.create = () => {
   return (WrapComponent: React.ComponentType<any>) =>

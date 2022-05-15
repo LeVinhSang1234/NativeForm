@@ -2,6 +2,10 @@
 
 ## Form
 
+#### hiddenRequired <boolean>
+
+hide label \* required
+
 #### colon:
 
 Configure the default value of colon for Form.Item. Indicates whether the colon after the label is displayed (only effective when prop layout is horizontal)
@@ -76,9 +80,12 @@ Function()
 
 Validate the specified fields and get their values and errors. If you don't specify the parameter of fieldNames, you will validate all fields.
 
-```
+```js
 (
-  callback(errors: {[fieldName]: any}[], values: {[key: string]: any}),
+  callback(
+    errors: {[fieldName]: any,  layout: {x: number, y: number, height: number, width: number}}[],
+    values: {[key: string]: any}
+  ),
   {fields: fieldNames: string[], excepts: fieldNames: string[]}
 ) => Promise<{errors, values}>
 ```
@@ -112,6 +119,12 @@ Function(fieldName: string) => boolean
 ## Form.Item
 
 `!must be inside the Form`
+
+#### styles
+
+- error: TextStyle, style label error
+- label: TextStyle, style label
+- colon: TextStyle, style colon label
 
 #### defaultValue
 
@@ -178,14 +191,30 @@ wrapperCol: {
 };
 ```
 
+## Input `<TextInputProps>`
+
+https://reactnative.dev/docs/textinput
+
+#### error `<Boolean>`
+
+preview border error input
+
+#### style `<ViewStyle>`
+
+Style View Input
+
+## Radio
+
+## RadioGroup
+
 # Example
 
 ```js
 //Function Component
 
 import React, {useCallback} from 'react';
-import {Button, SafeAreaView, StyleSheet, TextInput} from 'react-native';
-import Form from '@form-rn/form';
+import {Button, SafeAreaView, StyleSheet} from 'react-native';
+import Form, {Input, Radio, RadioGroup} from '@form-rn/form';
 
 const App = () => {
   const validator = useCallback((value, callback, touched) => {
@@ -206,40 +235,33 @@ const App = () => {
           name="input"
           label="Input"
           rule={{required: true, message: 'Validate Field'}}>
-          <TextInput style={styles.input} />
+          <Input />
         </Form.Item>
         <Form.Item name="input2" label="Input2" rule={{validator: validator}}>
-          <TextInput style={styles.input} />
+          <Input />
         </Form.Item>
-        <Form.Item
-          name="input3"
-          label="Input3"
-          rule={{required: true, whitespace: true}}>
-          <TextInput style={styles.input} />
+        <Form.Item name="input2" label="Input2" rule={{validator: validator}}>
+          <RadioGroup horizontal>
+            <Radio label="radio1" value="radio1" />
+            <Radio label="radio2" value="radio2" />
+            <Radio label="radio3" value="radio3" />
+          </RadioGroup>
         </Form.Item>
-        <Form.Item name="input4" label="Input4" rule={{required: true}}>
-          <TextInput style={styles.input} />
-        </Form.Item>
-        <Form.Item name="input4" label="Input4" rule={{required: true}}>
-          <TextInput style={styles.input} />
-        </Form.Item>
-        <Form.Item name="input4" label="Input4" rule={{required: true}}>
-          <Button
-            title="Submit"
-            onPress={() => {
-              form.validateFields((errors, values) => {
-                console.log(errors, values);
-              });
-            }}
-          />
-          <Button
-            title="Submit Async"
-            onPress={async () => {
-              const {errors, values} = await form.validateFields();
+        <Button
+          title="Submit"
+          onPress={() => {
+            form.validateFields((errors, values) => {
               console.log(errors, values);
-            }}
-          />
-        </Form.Item>
+            });
+          }}
+        />
+        <Button
+          title="Submit Async"
+          onPress={async () => {
+            const {errors, values} = await form.validateFields();
+            console.log(errors, values);
+          }}
+        />
       </Form>
     </SafeAreaView>
   );
@@ -263,8 +285,8 @@ export default App;
 //Class Component
 
 import React, {Component} from 'react';
-import {Button, SafeAreaView, StyleSheet, TextInput} from 'react-native';
-import Form from '@form-rn/form';
+import {Button, SafeAreaView, StyleSheet} from 'react-native';
+import Form, {Input} from '@form-rn/form';
 
 class App extends Component {
   validator = (value, callback, touched) => {
@@ -285,43 +307,23 @@ class App extends Component {
             name="input"
             label="Input"
             rule={{required: true, message: 'Validate Field'}}>
-            <TextInput style={styles.input} />
+            <Input />
           </Form.Item>
-          <Form.Item
-            name="input2"
-            label="Input2"
-            rule={{validator: this.validator}}>
-            <TextInput style={styles.input} />
-          </Form.Item>
-          <Form.Item
-            name="input3"
-            label="Input3"
-            rule={{required: true, whitespace: true}}>
-            <TextInput style={styles.input} />
-          </Form.Item>
-          <Form.Item name="input4" label="Input4" rule={{required: true}}>
-            <TextInput style={styles.input} />
-          </Form.Item>
-          <Form.Item name="input4" label="Input4" rule={{required: true}}>
-            <TextInput style={styles.input} />
-          </Form.Item>
-          <Form.Item name="input4" label="Input4" rule={{required: true}}>
-            <Button
-              title="Submit"
-              onPress={() => {
-                form.validateFields((errors, values) => {
-                  console.log(errors, values);
-                });
-              }}
-            />
-            <Button
-              title="Submit Async"
-              onPress={async () => {
-                const {errors, values} = await form.validateFields();
+          <Button
+            title="Submit"
+            onPress={() => {
+              form.validateFields((errors, values) => {
                 console.log(errors, values);
-              }}
-            />
-          </Form.Item>
+              });
+            }}
+          />
+          <Button
+            title="Submit Async"
+            onPress={async () => {
+              const {errors, values} = await form.validateFields();
+              console.log(errors, values);
+            }}
+          />
         </Form>
       </SafeAreaView>
     );
@@ -353,7 +355,7 @@ const form2 = useForm();
     name="input"
     label="Input"
     rule={{required: true, message: 'Validate Field'}}>
-    <TextInput style={styles.input} />
+    <Input />
   </Form.Item>
   <Button
     title="Submit Async"
@@ -369,7 +371,7 @@ const form2 = useForm();
     name="input"
     label="Input"
     rule={{required: true, message: 'Validate Field'}}>
-    <TextInput style={styles.input} />
+    <Input />
   </Form.Item>
   <Button
     title="Submit Async"

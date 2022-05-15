@@ -1,60 +1,48 @@
-import React, {useCallback} from 'react';
-import {Button, SafeAreaView, StyleSheet, TextInput} from 'react-native';
-import Form from './packages';
+import React from 'react';
+import {Button, SafeAreaView, StyleSheet} from 'react-native';
+import Form, {Input, Radio, RadioGroup} from './packages';
 
 const App = () => {
-  const validator = useCallback((value, callback, touched) => {
-    console.log(touched);
-    if (!value) {
-      callback('validate field');
-    } else {
-      callback();
-    }
-  }, []);
-
   const form = Form.useForm();
 
   return (
     <SafeAreaView style={styles.view}>
-      <Form dotRequired="after">
+      <Form
+        dotRequired="after"
+        initialValues={{
+          input: 'sang lv',
+          radio: 'haha',
+        }}>
         <Form.Item
           name="input"
-          label="Input"
+          label="Input qqeqweq eq meq eqweqw ewqwqewqewq 123213123 1232132131231221"
           rule={{required: true, message: 'Validate Field'}}>
-          <TextInput style={styles.input} />
-        </Form.Item>
-        <Form.Item name="input2" label="Input2" rule={{validator: validator}}>
-          <TextInput style={styles.input} />
+          <Input multiline />
         </Form.Item>
         <Form.Item
-          name="input3"
-          label="Input3"
-          rule={{required: true, whitespace: true}}>
-          <TextInput style={styles.input} />
+          name="radio"
+          label="Radio"
+          rule={{required: true, message: 'Validate Field'}}>
+          <RadioGroup>
+            <Radio label="hahaha121221321" value="haha" />
+            <Radio label="hahaha 213213213" value="hahu" />
+            <Radio label="hahaha 12312321321" value="ha" />
+          </RadioGroup>
         </Form.Item>
-        <Form.Item name="input4" label="Input4" rule={{required: true}}>
-          <TextInput style={styles.input} />
-        </Form.Item>
-        <Form.Item name="input4" label="Input4" rule={{required: true}}>
-          <TextInput style={styles.input} />
-        </Form.Item>
-        <Form.Item name="input4" label="Input4" rule={{required: true}}>
-          <Button
-            title="Submit"
-            onPress={() => {
-              form.validateFields((errors, values) => {
-                console.log(errors, values);
-              });
-            }}
-          />
-          <Button
-            title="Submit Async"
-            onPress={async () => {
-              const {errors, values} = await form.validateFields();
+        <Button
+          title="Submit"
+          onPress={() => {
+            form.validateFields((errors, values) => {
               console.log(errors, values);
-            }}
-          />
-        </Form.Item>
+            });
+          }}
+        />
+        <Button
+          title="Submit Async"
+          onPress={async () => {
+            await form.resetFields();
+          }}
+        />
       </Form>
     </SafeAreaView>
   );

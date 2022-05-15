@@ -1,6 +1,15 @@
-import React, {Component, Fragment} from 'react';
-import {NativeEventEmitter, StyleSheet, View, Text} from 'react-native';
+import React, {Component} from 'react';
+import {
+  NativeEventEmitter,
+  StyleSheet,
+  View,
+  Animated,
+  LayoutChangeEvent,
+} from 'react-native';
+import Text from '../Text';
 import {IError, IItemProps} from './types';
+
+const TextAnimated = Animated.createAnimatedComponent(Text);
 
 interface IStateItem {
   valueState: {value: any; error: any};
@@ -8,12 +17,33 @@ interface IStateItem {
 }
 
 class Item extends Component<
-  IItemProps & {form: any; errors: IError},
+  IItemProps & {
+    form: any;
+    errors: IError;
+    hiddenRequired?: boolean;
+  },
   IStateItem
 > {
-  constructor(props: IItemProps & {form: any; errors: IError}) {
+  animatedText: Animated.Value;
+  constructor(
+    props: IItemProps & {
+      form: any;
+      errors: IError;
+      hiddenRequired?: boolean;
+    },
+  ) {
     super(props);
-    const {value, defaultValue, validateFirst, name, form = {}} = props;
+    const {
+      value,
+      defaultValue,
+      validateFirst,
+      name,
+      form = {},
+      children,
+    } = props;
+    if (Array.isArray(children)) {
+      throw 'React.Children.only expected to receive a single React element child.';
+    }
     const initialValues = {value: value || defaultValue, error: undefined};
     this.state = {
       valueState: {value: value || defaultValue, error: undefined},
@@ -23,10 +53,15 @@ class Item extends Component<
     if (name && validateFirst) {
       form.ref[name](initialValues.value);
     }
+    this.animatedText = new Animated.Value(0);
   }
 
   shouldComponentUpdate(
-    nProps: IItemProps & {form: any; errors: IError},
+    nProps: IItemProps & {
+      form: any;
+      errors: IError;
+      hiddenRequired?: boolean;
+    },
     nState: IStateItem,
   ) {
     const {
@@ -39,6 +74,7 @@ class Item extends Component<
       checked,
       value,
       errors,
+      hiddenRequired,
     } = this.props;
     const {valueState} = this.state;
     return (
@@ -51,7 +87,8 @@ class Item extends Component<
       value !== nProps.value ||
       formItemLayout !== nProps.formItemLayout ||
       errors !== nProps.errors ||
-      dotRequired !== nProps.dotRequired
+      dotRequired !== nProps.dotRequired ||
+      hiddenRequired !== nProps.hiddenRequired
     );
   }
 
@@ -91,7 +128,7 @@ class Item extends Component<
         error: string,
         detectValidate?: boolean,
       ) => {
-        const {initialValues} = this.state;
+        const {initialValues, valueState} = this.state;
         if (!detectValidate && onChangeInput) {
           onChangeInput(val, name);
         }
@@ -133,9 +170,23 @@ class Item extends Component<
         } else {
           delete errors[name];
         }
+        if (valueState.error && !newValue.error) {
+          this.animatedText.setValue(0);
+        } else if (!valueState.error && newValue.error) {
+          Animated.timing(this.animatedText, {
+            toValue: 1,
+            duration: 100,
+            useNativeDriver: true,
+          }).start();
+        }
         this.setState({valueState: newValue});
       };
     }
+  };
+
+  layoutItemHandle = ({nativeEvent}: LayoutChangeEvent) => {
+    const {form, name} = this.props;
+    form.layout[name] = nativeEvent.layout;
   };
 
   renderWithLabel = (
@@ -156,24 +207,28 @@ class Item extends Component<
       onValueChange,
       onBlur,
       onBlurInput,
+      styles: stylesProps,
+      hiddenRequired,
     } = this.props;
+    const translateY = this.animatedText.interpolate({
+      inputRange: [0, 1],
+      outputRange: [-22, 0],
+    });
     const {valueState} = this.state;
     return (
-      <View style={styleForm}>
+      <View style={styleForm} onLayout={this.layoutItemHandle}>
         <View style={styleSpanCol}>
           <View style={styles.Viewlabel}>
-            {rule.required && dotRequired === 'before' ? (
-              <Text style={styles.dotRequired}>*</Text>
-            ) : null}
-            {typeof label === 'string' ? (
-              <Text style={styles.label}>{label}</Text>
-            ) : (
-              label
-            )}
-            {rule.required && dotRequired !== 'before' ? (
-              <Text style={styles.dotRequiredAfter}>*</Text>
-            ) : null}
-            <Text>{colon ? ':' : ''}</Text>
+            <Text style={[styles.label, stylesProps?.label]}>
+              {!hiddenRequired && rule.required && dotRequired === 'before' ? (
+                <Text style={styles.dotRequired}>*</Text>
+              ) : null}
+              {label}
+              {!hiddenRequired && rule.required && dotRequired !== 'before' ? (
+                <Text style={styles.dotRequiredAfter}>*</Text>
+              ) : null}
+            </Text>
+            <Text style={stylesProps?.colon}>{colon ? ':' : ''}</Text>
           </View>
         </View>
         <View style={styleSpanWrapCol}>
@@ -203,7 +258,19 @@ class Item extends Component<
               },
             },
           }}
-          <Text style={styles.error}>{valueState.error}</Text>
+          <View style={styles.error} removeClippedSubviews>
+            <TextAnimated
+              style={[
+                styles.textError,
+                {
+                  transform: [{scaleY: this.animatedText}, {translateY}],
+                  opacity: this.animatedText,
+                },
+                stylesProps?.error,
+              ]}>
+              {valueState.error}
+            </TextAnimated>
+          </View>
         </View>
       </View>
     );
@@ -221,15 +288,19 @@ class Item extends Component<
       label,
       onBlurInput,
       onBlur,
+      styles: stylesProps,
     } = this.props;
     const {valueState} = this.state;
-
     if (label) {
       return this.renderWithLabel(undefined, undefined, undefined);
     }
+    const translateY = this.animatedText.interpolate({
+      inputRange: [0, 1],
+      outputRange: [-22, 0],
+    });
 
     return (
-      <Fragment>
+      <View>
         {{
           ...children,
           props: {
@@ -255,8 +326,20 @@ class Item extends Component<
             },
           },
         }}
-        <Text style={styles.error}>{valueState.error}</Text>
-      </Fragment>
+        <View style={styles.error} removeClippedSubviews>
+          <TextAnimated
+            style={[
+              styles.textError,
+              {
+                transform: [{scaleY: this.animatedText}, {translateY}],
+                opacity: this.animatedText,
+              },
+              stylesProps?.error,
+            ]}>
+            {valueState.error}
+          </TextAnimated>
+        </View>
+      </View>
     );
   }
 }
@@ -289,11 +372,14 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   error: {
-    minHeight: 22,
+    overflow: 'hidden',
+  },
+  textError: {
     fontSize: 12,
     color: '#ff4d4f',
-    lineHeight: 16,
+    minHeight: 22,
     paddingBottom: 5,
+    fontWeight: '500',
   },
 });
 

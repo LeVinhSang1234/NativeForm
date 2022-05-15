@@ -1,7 +1,12 @@
 import {ReactChild} from 'react';
-import {ViewStyle} from 'react-native';
+import {TextStyle, ViewStyle} from 'react-native';
 
 export declare type IItemProps = {
+  styles?: {
+    error: TextStyle;
+    label: TextStyle;
+    colon: TextStyle;
+  };
   children?: any;
   defaultValue?: any;
   checked?: boolean;
@@ -119,6 +124,7 @@ export interface IFormProps {
   };
   dotRequired?: 'before' | 'after';
   form?: IFormHandle & {uid: string};
+  hiddenRequired?: boolean;
 }
 
 export interface IForm {
@@ -126,6 +132,14 @@ export interface IForm {
     ref: {[key: string]: any};
     value: {[key: string]: any};
     touched: {[key: string]: any};
+    layout: {
+      [key: string]: {
+        x: number;
+        y: number;
+        height: number;
+        width: number;
+      };
+    };
     validateFirst?: boolean;
   };
 }

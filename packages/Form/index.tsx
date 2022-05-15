@@ -28,6 +28,7 @@ const formControl: IForm = {
     value: {},
     touched: {},
     validateFirst: false,
+    layout: {},
   },
 };
 
@@ -86,6 +87,7 @@ class Form extends Component<IFormProps> {
         ref: {},
         value: {},
         touched: {},
+        layout: {},
       };
     }
     let uid = form?.uid || uuid;
@@ -226,6 +228,7 @@ class Form extends Component<IFormProps> {
     let errorArr: {[key: string]: any}[] | undefined = arrayKeys.map(
       (key: string) => ({
         [key]: errors[key],
+        layout: formControl[uid].layout[key],
       }),
     );
     if (!errorArr.length) {
@@ -254,9 +257,10 @@ class Form extends Component<IFormProps> {
     if (!uid || !formControl[uid]) {
       uid = uuid;
     }
+    const {initialValues} = this.props;
     const promise = (fields || Object.keys(formControl[uid].value)).map(
       async key => {
-        return this.onChange(undefined, key, errorsValue[key]);
+        return this.onChange(initialValues?.[key], key, errorsValue[key]);
       },
     );
     await Promise.all(promise);
@@ -273,8 +277,8 @@ class Form extends Component<IFormProps> {
   };
 
   renderChild = (child: any) => {
-    const {form} = this.props;
-    return {...child, props: {...child.props, form}};
+    const {form, hiddenRequired} = this.props;
+    return {...child, props: {...child.props, form, hiddenRequired}};
   };
 
   render() {
@@ -372,7 +376,7 @@ const ItemForm = (props: IItemProps) => {
         return handle.onParseField(v, callback, uid);
       }}
       onPress={handle.onPress}
-      value={formControlItem?.[props.name] || props.defaultValue}
+      value={formControlItem?.value?.[props.name] || props.defaultValue}
       colon={handle.colon}
       dotRequired={handle.dotRequired}
       formItemLayout={handle.formItemLayout}

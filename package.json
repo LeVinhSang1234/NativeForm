@@ -1,6 +1,6 @@
 {
   "name": "@rn-form/form",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "license": "UNLICENSED",
   "description": "react native form",
   "main": "lib/commonjs/index.js",
@@ -21,7 +21,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
-    "@babel/plugin-transform-typescript": "^7.16.8",
     "@babel/runtime": "^7.12.5",
     "@react-native-community/eslint-config": "^2.0.0",
     "@types/jest": "^26.0.23",
@@ -98,9 +97,6 @@
   "babel": {
     "presets": [
       "module:metro-react-native-babel-preset"
-    ],
-    "plugins": [
-      "@babel/plugin-transform-typescript"
     ]
   }
 }

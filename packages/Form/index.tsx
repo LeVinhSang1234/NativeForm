@@ -32,6 +32,8 @@ const formControl: IForm = {
   },
 };
 
+const initialValuesHandle: any = {};
+
 const handle: any = {};
 const handleForm: IFormHandleRemap = {
   setFieldsValue: () => null,
@@ -92,6 +94,7 @@ class Form extends Component<IFormProps> {
     }
     let uid = form?.uid || uuid;
     formControl[uid].validateFirst = validateFirst;
+    initialValuesHandle[uid] = initialValues;
     const data = Object.keys(initialValues).map(async key => {
       formControl[uid].value[key] = initialValues[key];
     });
@@ -115,6 +118,7 @@ class Form extends Component<IFormProps> {
     const {form} = this.props;
     if (form?.uid) {
       delete formControl[form.uid];
+      delete initialValuesHandle[form.uid];
     }
   }
 
@@ -139,11 +143,14 @@ class Form extends Component<IFormProps> {
     if (!formControl[uid]) {
       uid = uuid;
     }
-    const {initialValues} = this.props;
-    if (value !== undefined || initialValues?.[name] !== undefined) {
-      formControl[uid].value[name] = value || initialValues?.[name];
+    if (
+      value !== undefined ||
+      initialValuesHandle?.[uid]?.[name] !== undefined
+    ) {
+      formControl[uid].value[name] =
+        value || initialValuesHandle?.[uid]?.[name];
     } else {
-      formControl[uid].value[name] = initialValues?.[name];
+      formControl[uid].value[name] = initialValuesHandle?.[uid]?.[name];
     }
   };
 
@@ -170,7 +177,7 @@ class Form extends Component<IFormProps> {
     const promise = Object.keys(values).map(async key => {
       if (typeof formControl[uid].ref[key] === 'function') {
         formControl[uid].value[key] = values[key];
-        return this.onChange(values[key], key, errorsValue[key]);
+        return this.onChange(values[key], key, errorsValue[key], uid);
       }
     });
     await Promise.all(promise);
@@ -257,10 +264,14 @@ class Form extends Component<IFormProps> {
     if (!uid || !formControl[uid]) {
       uid = uuid;
     }
-    const {initialValues} = this.props;
     const promise = (fields || Object.keys(formControl[uid].value)).map(
       async key => {
-        return this.onChange(initialValues?.[key], key, errorsValue[key]);
+        return this.onChange(
+          initialValuesHandle?.[uid]?.[key],
+          key,
+          errorsValue[key],
+          uid,
+        );
       },
     );
     await Promise.all(promise);
@@ -354,8 +365,9 @@ const ItemForm = (props: IItemProps) => {
       delete form?.ref[nameProps];
       delete form?.value[nameProps];
       delete form?.touched[nameProps];
+      delete initialValuesHandle?.[uid]?.[nameProps];
     };
-  }, [form?.ref, form?.touched, form?.value, nameProps]);
+  }, [form?.ref, form?.touched, form?.value, nameProps, uid]);
 
   return (
     <Item

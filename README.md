@@ -345,10 +345,11 @@ export default Form.create()(App);
 ```
 
 ```js
-// many Form
+// multiple Form
 
 const form1 = useForm();
 const form2 = useForm();
+const form3 = useForm();
 
 <Form form={form1} dotRequired="after">
   <Form.Item
@@ -368,7 +369,7 @@ const form2 = useForm();
 
 <Form form={form2} dotRequired="after">
   <Form.Item
-    name="input"
+    name="input2"
     label="Input"
     rule={{required: true, message: 'Validate Field'}}>
     <Input />
@@ -380,5 +381,21 @@ const form2 = useForm();
       console.log(errors, values);
     }}
   />
+  <Form form={form3} dotRequired="after">
+    <Form.Item
+      name="input3"
+      label="Input"
+      rule={{required: true, message: 'Validate Field'}}>
+      <Input />
+    </Form.Item>
+    <Button
+      title="Submit Async"
+      onPress={async () => {
+        const {errors, values} = await form3.validateFields();
+        console.log(errors, values);
+      }}
+    />
+  </Form>
+  ;
 </Form>;
 ```

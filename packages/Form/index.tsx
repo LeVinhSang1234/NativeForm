@@ -47,7 +47,7 @@ const handleForm: IFormHandleRemap = {
 let errors: IError = {};
 
 class Form extends Component<IFormProps> {
-  static useForm: () => IFormHandle;
+  static useForm: () => IFormHandle & {uid: string};
   static Item: (props: IItemProps) => JSX.Element;
   static create: () => (
     WrapComponent: React.ComponentType<any>,
@@ -278,7 +278,7 @@ class Form extends Component<IFormProps> {
 
   renderChild = (child: any) => {
     const {form, hiddenRequired} = this.props;
-    return {...child, props: {...child.props, form, hiddenRequired}};
+    return {...child, props: {form, hiddenRequired, ...child.props}};
   };
 
   render() {

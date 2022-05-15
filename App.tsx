@@ -20,7 +20,7 @@ const App = () => {
             name="input"
             label="Input qqeqweq eq meq eqweqw ewqwqewqewq 123213123 1232132131231221"
             rule={{required: true, message: 'Validate Field'}}>
-            <Input multiline />
+            <Input multiline placeholder="Aa" />
           </Form.Item>
           <Form.Item
             name="radio"

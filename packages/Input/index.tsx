@@ -89,6 +89,7 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
           textAlignVertical="center"
           {...props}
           style={{color}}
+          placeholderTextColor={PlatformColor('placeholderText')}
           onChange={undefined}
           onChangeText={onChangeText}
           onBlur={this.onBlur}

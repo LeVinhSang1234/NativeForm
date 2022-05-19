@@ -14,9 +14,9 @@ export declare type IItemProps = {
   onBlurInput?: any;
   onBlur?: any;
   onParseField?: (v: any, callback: any) => any;
-  onChange?: (v: any, name: string) => any;
+  onChange?: (v: any) => any;
   value?: any;
-  onPress?: (v: any, key: any) => any;
+  onPress?: (v: any) => any;
   rule?: {
     whitespace?: boolean;
     required?: boolean;
@@ -29,9 +29,9 @@ export declare type IItemProps = {
     trigger?: 'onChange' | 'blur';
   };
   validateFirst?: boolean;
-  onValueChange?: (v: any, key: string) => any;
-  onChangeText?: (v: any, name: string) => any;
-  onChangeInput?: (v: any, key: any) => any;
+  onChangeValue?: (v: any) => any;
+  onChangeText?: (v: any) => any;
+  onChangeInput?: (v: any) => any;
   label?: any;
   colon?: string;
   dotRequired?: 'before' | 'after';

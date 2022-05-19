@@ -18,7 +18,7 @@ interface IProps {
   dotColorChecked?: string;
   disabled?: boolean;
   defaultChecked?: boolean;
-  onChange?: (c: boolean, v: any) => any;
+  onChangeValue?: (c: boolean, v: any) => any;
   style?: ViewStyle;
   label?: string;
   styleLabel?: TextStyle;
@@ -92,13 +92,11 @@ class Radio extends Component<IProps, IState> {
 
   handlePress = () => {
     const {checked} = this.state;
-    const {onChange, checked: checkedProps, value} = this.props;
+    const {onChangeValue, checked: checkedProps, value} = this.props;
     if (checkedProps === undefined) {
       this.handleChangeChecked();
     }
-    if (typeof onChange === 'function') {
-      onChange(!checked, value);
-    }
+    onChangeValue?.(!checked, value);
   };
 
   render() {

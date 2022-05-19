@@ -1,5 +1,5 @@
 import React, {Component, ReactChild, useEffect, useRef} from 'react';
-import {View, NativeEventEmitter} from 'react-native';
+import {View} from 'react-native';
 import Item from './Item';
 import {
   IError,
@@ -72,7 +72,6 @@ class Form extends Component<IFormProps> {
     handle.onChange = this.onChange;
     handle.onBlurInput = this.onBlurInput;
     handle.onParseField = this.onParseField;
-    handle.onPress = this.onPress;
     handle.colon = colon;
     handle.formItemLayout = formItemLayout;
     handle.dotRequired = dotRequired;
@@ -151,18 +150,6 @@ class Form extends Component<IFormProps> {
         value || initialValuesHandle?.[uid]?.[name];
     } else {
       formControl[uid].value[name] = initialValuesHandle?.[uid]?.[name];
-    }
-  };
-
-  onPress = (e: NativeEventEmitter, func: any, uid: string = uuid) => {
-    if (!formControl[uid]) {
-      uid = uuid;
-    }
-    if (typeof func === 'function') {
-      func(e, {
-        value: formControl[uid].value,
-        erorrs: Object.keys(errors).map(key => ({[key]: errors[key]})),
-      });
     }
   };
 
@@ -361,10 +348,10 @@ const ItemForm = (props: IItemProps) => {
 
   useEffect(() => {
     return () => {
-      delete errors[nameProps];
-      delete form?.ref[nameProps];
-      delete form?.value[nameProps];
-      delete form?.touched[nameProps];
+      delete errors?.[nameProps];
+      delete form?.ref?.[nameProps];
+      delete form?.value?.[nameProps];
+      delete form?.touched?.[nameProps];
       delete initialValuesHandle?.[uid]?.[nameProps];
     };
   }, [form?.ref, form?.touched, form?.value, nameProps, uid]);
@@ -374,25 +361,23 @@ const ItemForm = (props: IItemProps) => {
       {...props}
       errors={errors}
       form={formControlItem}
-      onChange={(v: any, name: string, error?: string) => {
-        return handle.onChange(v, name, error, uid);
+      onChangeText={(v: any) => {
+        return handle.onChange(v, nameProps, undefined, uid);
       }}
-      onChangeText={(v: any, name: string) => {
-        return handle.onChange(v, name, undefined, uid);
-      }}
-      onValueChange={(v: any, name: string) => {
-        return handle.onChange(v, name, undefined, uid);
+      onChangeValue={(v: any) => {
+        return handle.onChange(v, nameProps, undefined, uid);
       }}
       onChangeInput={props.onChange}
       onParseField={(v: any, callback: any) => {
         return handle.onParseField(v, callback, uid);
       }}
-      onPress={handle.onPress}
       value={formControlItem?.value?.[props.name] || props.defaultValue}
       colon={handle.colon}
       dotRequired={handle.dotRequired}
       formItemLayout={handle.formItemLayout}
-      onBlurInput={handle.onBlurInput}
+      onBlurInput={(v: any) => {
+        handle.onBlurInput(nameProps, v, uid);
+      }}
     />
   );
 };

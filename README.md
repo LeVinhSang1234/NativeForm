@@ -201,6 +201,8 @@ preview border error input
 
 #### style `<ViewStyle>`
 
+#### styleInput `<TextStyle>`
+
 Style View Input
 
 ## Radio

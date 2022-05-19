@@ -95,8 +95,11 @@ class Item extends Component<
   UNSAFE_componentWillReceiveProps(
     nProps: IItemProps & {form: any; errors: IError},
   ) {
-    const {name} = this.props;
-    if (name !== nProps.name && nProps.name) {
+    const {name, rule, form} = this.props;
+    if (
+      (name !== nProps.name || rule !== nProps.rule || form !== nProps.form) &&
+      nProps.name
+    ) {
       const valueState = nProps.value || nProps.defaultValue;
       this.handleRemapItem(nProps);
       if (nProps.validateFirst) {
@@ -130,7 +133,7 @@ class Item extends Component<
       ) => {
         const {initialValues, valueState} = this.state;
         if (!detectValidate && onChangeInput) {
-          onChangeInput(val, name);
+          onChangeInput(val);
         }
         if ((val || '') !== (initialValues.value || '')) {
           form.touched[name] = true;
@@ -144,7 +147,11 @@ class Item extends Component<
         }
         if (error) {
           newValue.error = error;
-        } else if (rule.required && !v) {
+        } else if (
+          rule.required &&
+          !v &&
+          (rule.trigger === 'onChange' || detectValidate)
+        ) {
           if (rule.message) {
             newValue.error = rule.message;
           } else {
@@ -198,13 +205,10 @@ class Item extends Component<
       dotRequired,
       rule = {},
       label,
-      name,
       colon,
       children,
-      onChange,
-      onPress,
       onChangeText,
-      onValueChange,
+      onChangeValue,
       onBlur,
       onBlurInput,
       styles: stylesProps,
@@ -236,14 +240,10 @@ class Item extends Component<
             ...children,
             props: {
               ...children.props,
-              onChange: (v: string) => onChange?.(v, name),
               value: valueState.value,
               error: valueState.error,
-              onPress: (e: NativeEventEmitter) =>
-                onPress?.(e, children.props.onPress),
-              onValueChange: (e: NativeEventEmitter) =>
-                onValueChange?.(e, name),
-              onChangeText: (e: string) => onChangeText?.(e, name),
+              onChangeValue: (value: any) => onChangeValue?.(value),
+              onChangeText: (value: string) => onChangeText?.(value),
               checked: !!valueState.value,
               onBlur: (e: NativeEventEmitter) => {
                 if (typeof onBlur === 'function') {
@@ -253,7 +253,7 @@ class Item extends Component<
                   typeof onBlurInput === 'function' &&
                   rule.trigger === 'blur'
                 ) {
-                  onBlurInput(name, valueState.value);
+                  onBlurInput(valueState.value);
                 }
               },
             },
@@ -280,10 +280,8 @@ class Item extends Component<
     const {
       children,
       name,
-      onChange,
-      onPress = () => null,
       rule = {},
-      onValueChange,
+      onChangeValue,
       onChangeText,
       label,
       onBlurInput,
@@ -305,13 +303,10 @@ class Item extends Component<
           ...children,
           props: {
             ...children.props,
-            onChange: (v: string) => onChange?.(v, name),
             value: valueState.value,
             error: valueState.error,
-            onPress: (e: NativeEventEmitter) =>
-              onPress(e, children.props.onPress),
-            onValueChange: (e: NativeEventEmitter) => onValueChange?.(e, name),
-            onChangeText: (e: NativeEventEmitter) => onChangeText?.(e, name),
+            onChangeValue: (value: any) => onChangeValue?.(value),
+            onChangeText: (value: string) => onChangeText?.(value),
             checked: !!valueState.value,
             onBlur: (e: NativeEventEmitter) => {
               if (typeof onBlur === 'function') {

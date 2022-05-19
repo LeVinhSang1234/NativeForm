@@ -8,6 +8,7 @@ import {
   TextInput,
   TextInputFocusEventData,
   TextInputProps,
+  TextStyle,
   ViewStyle,
 } from 'react-native';
 
@@ -15,6 +16,10 @@ export declare type ITextInputProps = {
   error?: string | boolean;
   onChangeText?: (v: string) => any;
   style?: ViewStyle;
+  styleInput?: TextStyle;
+  activeBorderColor?: string;
+  rangeBorderColor?: string;
+  borderColor?: string;
 };
 
 interface IState {
@@ -75,10 +80,19 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
   };
 
   render() {
-    const {style, onChangeText, value, ...props} = this.props;
+    const {
+      style,
+      onChangeText,
+      value,
+      activeBorderColor = '#40a9ff',
+      rangeBorderColor = '#ff4d4f',
+      borderColor: borderColorProps = '#d9d9d9',
+      styleInput,
+      ...props
+    } = this.props;
     const borderColor = this.animatedInput.interpolate({
       inputRange: [0, 1, 2],
-      outputRange: ['#d9d9d9', '#40a9ff', '#ff4d4f'],
+      outputRange: [borderColorProps, activeBorderColor, rangeBorderColor],
     });
     const color = PlatformColor(
       Platform.OS === 'ios' ? 'label' : '?android:attr/textColor',
@@ -87,8 +101,8 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
       <Animated.View style={[styles.input, {borderColor}, style]}>
         <TextInput
           textAlignVertical="center"
+          style={[{color}, styleInput]}
           {...props}
-          style={{color}}
           placeholderTextColor={PlatformColor('placeholderText')}
           onChange={undefined}
           onChangeText={onChangeText}

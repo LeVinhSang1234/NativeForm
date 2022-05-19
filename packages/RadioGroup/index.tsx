@@ -3,15 +3,15 @@ import {StyleSheet, View} from 'react-native';
 
 export declare type IRadioGroup = {
   value?: any;
-  onChange?: (v: any) => any;
+  onChangeValue?: (v: any) => any;
   horizontal?: boolean;
   error?: any;
 };
 
 class RadioGroup extends Component<IRadioGroup> {
-  onChange = (_: boolean, v: any) => {
-    const {onChange} = this.props;
-    onChange?.(v);
+  onChangeValue = (_: boolean, v: any) => {
+    const {onChangeValue} = this.props;
+    onChangeValue?.(v);
   };
 
   renderChild = (child: any, isLast?: boolean) => {
@@ -26,7 +26,7 @@ class RadioGroup extends Component<IRadioGroup> {
           {marginRight: horizontal && !isLast ? 16 : 0},
           child.props.style,
         ],
-        onChange: this.onChange,
+        onChangeValue: this.onChangeValue,
         checked: value === child.props.value,
       },
     };

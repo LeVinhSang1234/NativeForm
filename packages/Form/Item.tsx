@@ -289,6 +289,9 @@ class Item extends Component<
       styles: stylesProps,
     } = this.props;
     const {valueState} = this.state;
+    if (!children) {
+      return null;
+    }
     if (label) {
       return this.renderWithLabel(undefined, undefined, undefined);
     }

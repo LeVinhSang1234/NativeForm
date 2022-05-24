@@ -7,7 +7,7 @@ import DateProvider from './packages/DatePicker/Provider';
 const App = () => {
   const form1 = Form.useForm();
   return (
-    <DateProvider>
+    <DateProvider textDone="Done">
       <SafeAreaView style={styles.view}>
         <ScrollView>
           <Form form={form1}>

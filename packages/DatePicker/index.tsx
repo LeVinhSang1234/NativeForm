@@ -131,13 +131,17 @@ class DatePickerSelect extends Component<IDatePickerProps, IDatePickerState> {
 
   close = () => {
     const {close} = this.props;
+    this.reset(close);
+  };
+
+  reset = (callback?: any) => {
     const {value = new Date()} = this.props;
     const month = new Date(value).getMonth() + 1;
     const year = new Date(value).getFullYear();
     this.initState = {month, year, date: undefined};
     this.setState({...this.initState}, () => {
       this.setState({dates: this.mapDate()});
-      close();
+      callback?.();
     });
   };
 

@@ -2,6 +2,7 @@ import React, {Component, createContext} from 'react';
 import {
   Animated,
   ColorSchemeName,
+  GestureResponderEvent,
   Keyboard,
   LayoutAnimation,
   Platform,
@@ -37,8 +38,11 @@ export declare type IDateProviderProps = {
 
 class SwapDateProvider extends Component<any> {
   height: number;
-  animatedHeight: Animated.Value;
+  animatedHeight: Animated.Value | any;
   removeKeyboard: any;
+  pageYStart?: number;
+  pageYPrevious?: number;
+  datePicker?: DatePicker | null;
 
   constructor(props: any) {
     super(props);
@@ -88,6 +92,44 @@ class SwapDateProvider extends Component<any> {
     );
   };
 
+  onMoveShouldSetResponder = ({nativeEvent}: GestureResponderEvent) => {
+    const {pageY} = nativeEvent;
+    return !!this.pageYStart && Math.abs(this.pageYStart - pageY) > 30;
+  };
+
+  onTouchStart = ({nativeEvent}: GestureResponderEvent) => {
+    this.pageYStart = nativeEvent.pageY;
+  };
+
+  onResponderMove = ({nativeEvent}: GestureResponderEvent) => {
+    if (!this.pageYPrevious) {
+      this.pageYPrevious = nativeEvent.pageY;
+    } else {
+      let toValue =
+        this.animatedHeight._value - (nativeEvent.pageY - this.pageYPrevious);
+      if (toValue >= 370) {
+        toValue = 370;
+      }
+      Animated.timing(this.animatedHeight, {
+        toValue,
+        duration: 10,
+        useNativeDriver: false,
+      }).start();
+      this.pageYPrevious = nativeEvent.pageY;
+    }
+  };
+
+  onResponderEnd = () => {
+    this.pageYPrevious = undefined;
+    this.pageYStart = undefined;
+    if (this.animatedHeight._value < 200) {
+      this.close();
+      this.datePicker?.reset?.();
+    } else {
+      this.open();
+    }
+  };
+
   render() {
     const {children, colorSchema, styles: stylesProps, textDone} = this.props;
     const backgroundColor = colorSchema === 'light' ? '#fff' : '#141414';
@@ -95,12 +137,19 @@ class SwapDateProvider extends Component<any> {
       <ProviderDate.Provider value={{open: this.open, colorSchema}}>
         {children}
         <Animated.View
+          onTouchStart={this.onTouchStart}
+          onMoveShouldSetResponder={this.onMoveShouldSetResponder}
+          onResponderMove={this.onResponderMove}
+          onResponderEnd={this.onResponderEnd}
           style={[
             styles.view,
             {height: this.animatedHeight, backgroundColor},
             stylesProps?.bottomSheet,
           ]}>
           <DatePicker
+            ref={ref => {
+              this.datePicker = ref;
+            }}
             textDone={textDone}
             styles={stylesProps}
             close={this.close}

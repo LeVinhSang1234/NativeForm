@@ -1,7 +1,8 @@
 import React, {Component} from 'react';
-import {Pressable, StyleSheet, View} from 'react-native';
+import {Pressable, StyleSheet, TextStyle, View, ViewStyle} from 'react-native';
 import Text from '../Text';
 import CDate from './Child';
+import {ProviderDate} from './Provider';
 
 const dayStartBySun = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const dayStartByMon = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -11,22 +12,29 @@ export declare type IDatePickerProps = {
   startFromSunday?: boolean;
   value?: Date;
   close: () => any;
+  styles?: {
+    viewDone?: ViewStyle;
+    textDone?: TextStyle;
+    buttonDone?: ViewStyle;
+  };
+  textDone?: string;
 };
 
 interface IDatePickerState {
   dates: any[];
   month: number;
   year: number;
+  date?: number;
 }
 
 class DatePickerSelect extends Component<IDatePickerProps, IDatePickerState> {
-  initState: {month: number; year: number};
+  initState: {month: number; year: number; date?: number};
   constructor(props: IDatePickerProps) {
     super(props);
     const {value = new Date()} = props;
     const month = new Date(value).getMonth() + 1;
     const year = new Date(value).getFullYear();
-    this.initState = {month, year};
+    this.initState = {month, year, date: undefined};
     this.state = {dates: this.mapDate(), ...this.initState};
   }
 
@@ -34,10 +42,8 @@ class DatePickerSelect extends Component<IDatePickerProps, IDatePickerState> {
     nProps: IDatePickerProps,
     nState: IDatePickerState,
   ) {
-    const {month, year, dates} = this.state;
-    return (
-      month !== nState.month || year !== nState.year || dates !== nState.dates
-    );
+    const {dates} = this.state;
+    return dates !== nState.dates;
   }
 
   monthDays = () => {
@@ -51,29 +57,34 @@ class DatePickerSelect extends Component<IDatePickerProps, IDatePickerState> {
     };
   };
 
-  checkActive = (date: number, now: Date, dateValue?: Date) => {
-    const {month, year} = this.state || this.initState;
+  checkActive = (date: number, now: Date) => {
+    const {month, year, date: dateState} = this.state || this.initState;
     const yearNow = now.getFullYear();
     const monthNow = now.getMonth() + 1;
     const dateN = now.getDate();
-    if (!dateValue) {
-      return {
-        active: false,
-        focus: yearNow === year && monthNow === month && date === dateN,
-      };
-    }
     return {
-      active:
-        dateValue.getFullYear() === year &&
-        dateValue.getMonth() + 1 === month &&
-        dateValue.getDate() === date,
+      active: dateState === date,
+      focus: yearNow === year && monthNow === month && date === dateN,
     };
+  };
+
+  onChange = (date: number, month: number) => {
+    const {year} = this.state;
+    let monthNow = month;
+    let yearNow = year;
+    if (month > 12) {
+      monthNow = 1;
+      yearNow += 1;
+    }
+    this.setState({month: monthNow, year: yearNow, date}, () => {
+      this.setState({dates: this.mapDate()});
+    });
   };
 
   mapDate = () => {
     let {mdays, sDate, eDate, preMDate, now} = this.monthDays();
-    const {startFromSunday = true, shortDays, value} = this.props;
-    const dateValue = value ? new Date(value) : undefined;
+    const {startFromSunday = true, shortDays} = this.props;
+    const {month} = this.state || this.initState;
     const days = shortDays || (startFromSunday ? dayStartBySun : dayStartByMon);
     if (!startFromSunday && !sDate) {
       sDate = 7;
@@ -84,30 +95,80 @@ class DatePickerSelect extends Component<IDatePickerProps, IDatePickerState> {
     for (let i = is; i <= ifr; i++) {
       if (i <= 0) {
         const v = preMDate + i;
-        map.push(<CDate pre key={i} children={v} />);
+        map.push(
+          <CDate
+            onChange={() => this.onChange(v, month - 1)}
+            pre
+            key={i}
+            children={v}
+          />,
+        );
         continue;
       }
       if (i > 0 && i <= mdays) {
-        const checkAc = this.checkActive(i, now, dateValue);
-        map.push(<CDate {...checkAc} children={i} key={i} />);
+        const checkAc = this.checkActive(i, now);
+        map.push(
+          <CDate
+            {...checkAc}
+            onChange={() => this.onChange(i, month)}
+            children={i}
+            key={i}
+          />,
+        );
         continue;
       }
-      map.push(<CDate next key={i} children={i - mdays} />);
+      map.push(
+        <CDate
+          next
+          key={i}
+          onChange={() => this.onChange(i - mdays, month + 1)}
+          children={i - mdays}
+        />,
+      );
     }
     return map;
   };
 
+  close = () => {
+    const {close} = this.props;
+    const {value = new Date()} = this.props;
+    const month = new Date(value).getMonth() + 1;
+    const year = new Date(value).getFullYear();
+    this.initState = {month, year, date: undefined};
+    this.setState({...this.initState}, () => {
+      this.setState({dates: this.mapDate()});
+      close();
+    });
+  };
+
   render() {
     const {dates} = this.state;
-    const {close} = this.props;
+    const {styles: stylesProps, textDone} = this.props;
     return (
       <View style={styles.view}>
-        <View style={styles.viewDone}>
-          <View />
-          <Pressable onPress={close} style={styles.pressable}>
-            <Text style={styles.textDone}>Done</Text>
-          </Pressable>
-        </View>
+        <ProviderDate.Consumer>
+          {({colorSchema}) => {
+            const backgroundColor =
+              colorSchema === 'light' ? '#f8f8f8' : '#6a6a6a';
+            return (
+              <View
+                style={[
+                  styles.viewDone,
+                  {backgroundColor},
+                  stylesProps?.viewDone,
+                ]}>
+                <View />
+                <Pressable
+                  onPress={this.close}
+                  style={[styles.pressable, stylesProps?.buttonDone]}>
+                  <Text style={[styles.textDone, stylesProps?.textDone]}>
+                    {textDone}
+                  </Text>
+                </Pressable>
+              </View>
+            );
+          }}
+        </ProviderDate.Consumer>
         <View style={styles.swapViewDate}>
           <View style={styles.viewChild}>{dates}</View>
         </View>
@@ -131,16 +192,15 @@ const styles = StyleSheet.create({
   },
   viewDone: {
     height: 48,
-    borderBottomColor: '#f4f4f4',
-    borderBottomWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 10,
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
   },
   textDone: {
     fontWeight: '600',
-    color: '#1890ff',
   },
   pressable: {
     height: '100%',

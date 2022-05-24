@@ -13,11 +13,12 @@ class SwapChildDate extends Component<any> {
   }
 
   render() {
-    const {children, width, next, pre, active, focus} = this.props;
-    const widthView = (width - 20) / 7;
+    const {children, width, next, pre, active, focus, onChange} = this.props;
+    const widthView = (width - 40) / 7;
     const opacity = next || pre ? 0.3 : 1;
     return (
       <Pressable
+        onPress={onChange}
         style={[
           styles.view,
           {width: widthView, height: widthView, opacity},
@@ -45,6 +46,7 @@ const styles = StyleSheet.create({
     maxWidth: 50,
     maxHeight: 50,
     borderRadius: 100,
+    margin: 1,
   },
   viewActive: {
     backgroundColor: '#1890ff',
@@ -55,7 +57,6 @@ const styles = StyleSheet.create({
   },
   text: {
     fontWeight: '500',
-    color: '#000',
   },
   textActive: {
     color: '#fff',

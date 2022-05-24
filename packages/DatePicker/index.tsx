@@ -1,5 +1,13 @@
 import React, {Component} from 'react';
-import {Pressable, StyleSheet, TextStyle, View, ViewStyle} from 'react-native';
+import {
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextStyle,
+  View,
+  ViewStyle,
+} from 'react-native';
 import Text from '../Text';
 import CDate from './Child';
 import {ProviderDate} from './Provider';
@@ -69,12 +77,21 @@ class DatePickerSelect extends Component<IDatePickerProps, IDatePickerState> {
   };
 
   onChange = (date: number, month: number) => {
-    const {year} = this.state;
+    const {year, month: monthState} = this.state;
     let monthNow = month;
     let yearNow = year;
     if (month > 12) {
       monthNow = 1;
       yearNow += 1;
+    }
+    if (monthState !== month) {
+      LayoutAnimation.configureNext(
+        LayoutAnimation.create(
+          250,
+          Platform.OS === 'ios' ? 'keyboard' : 'easeOut',
+          'opacity',
+        ),
+      );
     }
     this.setState({month: monthNow, year: yearNow, date}, () => {
       this.setState({dates: this.mapDate()});

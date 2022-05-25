@@ -101,8 +101,8 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
       <Animated.View style={[styles.input, {borderColor}, style]}>
         <TextInput
           textAlignVertical="center"
-          style={[{color}, styleInput]}
           {...props}
+          style={[{color}, styleInput]}
           placeholderTextColor={PlatformColor('placeholderText')}
           onChange={undefined}
           onChangeText={onChangeText}
@@ -125,6 +125,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
     textAlignVertical: 'center',
     fontSize: 14,
+    paddingTop: 7.5,
   },
 });
 

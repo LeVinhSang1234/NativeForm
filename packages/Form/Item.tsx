@@ -147,28 +147,31 @@ class Item extends Component<
         }
         if (error) {
           newValue.error = error;
-        } else if (
-          rule.required &&
-          !v &&
-          (rule.trigger === 'onChange' || detectValidate)
-        ) {
-          if (rule.message) {
-            newValue.error = rule.message;
-          } else {
-            newValue.error = 'Field is required';
+        } else {
+          if (
+            rule.required &&
+            !v &&
+            (!rule.trigger || rule.trigger === 'onChange' || detectValidate)
+          ) {
+            if (rule.message) {
+              newValue.error = rule.message;
+            } else {
+              newValue.error = 'Field is required';
+            }
           }
-        } else if (
-          rule.validator &&
-          typeof rule.validator === 'function' &&
-          (rule.trigger === 'onChange' || !rule.trigger || detectValidate)
-        ) {
-          rule.validator(
-            v,
-            (message: string | undefined) => {
-              newValue.error = message;
-            },
-            form.touched,
-          );
+          if (
+            rule.validator &&
+            typeof rule.validator === 'function' &&
+            (rule.trigger === 'onChange' || !rule.trigger || detectValidate)
+          ) {
+            rule.validator(
+              v,
+              (message: string | undefined) => {
+                newValue.error = message;
+              },
+              form.touched,
+            );
+          }
         }
         if (newValue.error) {
           if (errors[name] !== newValue.error) {

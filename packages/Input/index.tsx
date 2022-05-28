@@ -91,6 +91,7 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
       borderColor: borderColorProps = '#d9d9d9',
       styleInput,
       onChangeInput,
+      multiline,
       ...props
     } = this.props;
     const borderColor = this.animatedInput.interpolate({
@@ -100,11 +101,13 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
     const color = PlatformColor(
       Platform.OS === 'ios' ? 'label' : '?android:attr/textColor',
     );
+    const paddingTop = multiline ? 6 : 11;
     return (
-      <Animated.View style={[styles.input, {borderColor}, style]}>
+      <Animated.View style={[styles.input, {borderColor}, {paddingTop}, style]}>
         <TextInput
           textAlignVertical="center"
           {...props}
+          multiline={multiline}
           style={[{color}, styleInput]}
           placeholderTextColor={PlatformColor('placeholderText')}
           onChange={onChangeInput}
@@ -128,7 +131,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
     textAlignVertical: 'center',
     fontSize: 14,
-    paddingTop: 7.5,
   },
 });
 

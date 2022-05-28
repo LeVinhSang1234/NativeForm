@@ -120,7 +120,8 @@ Function(fieldName: string) => boolean
 
 `!must be inside the Form`
 
-#### children ``function({onChangeValue, value, onBlur, error}: ChildrenItem) => any``
+#### children `function({onChangeValue, value, onBlur, error}: ChildrenItem) => any | any`
+
 - example below
 - onBlur must be required when rule.trigger === "blur"
 

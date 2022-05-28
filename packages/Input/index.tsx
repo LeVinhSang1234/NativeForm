@@ -4,6 +4,7 @@ import {
   NativeSyntheticEvent,
   Platform,
   PlatformColor,
+  Pressable,
   StyleSheet,
   TextInput,
   TextInputChangeEventData,
@@ -12,6 +13,8 @@ import {
   TextStyle,
   ViewStyle,
 } from 'react-native';
+
+const PressAnimated = Animated.createAnimatedComponent(Pressable);
 
 export declare type ITextInputProps = {
   error?: string | boolean;
@@ -30,6 +33,7 @@ interface IState {
 
 class Input extends Component<ITextInputProps & TextInputProps, IState> {
   animatedInput: Animated.Value;
+  TextInput?: TextInput | null;
   constructor(props: ITextInputProps & TextInputProps) {
     super(props);
     const {error} = props;
@@ -103,8 +107,13 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
     );
     const paddingTop = multiline ? 6 : 11;
     return (
-      <Animated.View style={[styles.input, {borderColor}, {paddingTop}, style]}>
+      <PressAnimated
+        style={[styles.input, {borderColor}, {paddingTop}, style]}
+        onPress={() => {
+          this.TextInput?.focus?.();
+        }}>
         <TextInput
+          ref={ref => (this.TextInput = ref)}
           textAlignVertical="center"
           {...props}
           multiline={multiline}
@@ -116,7 +125,7 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
           onFocus={this.onFocus}>
           {value}
         </TextInput>
-      </Animated.View>
+      </PressAnimated>
     );
   }
 }

@@ -1,5 +1,15 @@
-import React, {Component, ReactChild, useEffect, useRef} from 'react';
-import {View} from 'react-native';
+import React, {
+  Component,
+  ReactChild,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
+import {
+  ScrollView as ScrollViewLibrary,
+  ScrollViewProps,
+  View,
+} from 'react-native';
 import Item from './Item';
 import {
   IError,
@@ -48,12 +58,15 @@ const handleForm: IFormHandleRemap = {
 
 let errors: IError = {};
 
-class Form extends Component<IFormProps> {
+class Form extends Component<
+  IFormProps & {onScrollError?: (y: number) => any}
+> {
   static useForm: () => IFormHandle & {uid: string};
   static Item: (props: IItemProps) => JSX.Element;
   static create: () => (
     WrapComponent: React.ComponentType<any>,
   ) => React.ForwardRefExoticComponent<React.RefAttributes<unknown>>;
+  static ScrollView: (props: ScrollViewProps & IFormProps) => JSX.Element;
 
   constructor(props: IFormProps) {
     super(props);
@@ -121,13 +134,19 @@ class Form extends Component<IFormProps> {
     }
   }
 
-  onChange = (v: any, name: string, error?: string, uid: string = uuid) => {
+  onChange = (
+    v: any,
+    name: string,
+    error?: string,
+    uid: string = uuid,
+    isReset?: boolean,
+  ) => {
     if (!formControl[uid]) {
       uid = uuid;
     }
     formControl[uid].value[name] = v;
     if (typeof formControl[uid].ref[name] === 'function') {
-      formControl[uid].ref[name](v, error);
+      formControl[uid].ref[name](v, error, false, isReset);
     }
   };
 
@@ -231,6 +250,11 @@ class Form extends Component<IFormProps> {
     if (typeof calback === 'function') {
       calback(errorArr, formControl[uid].value);
     }
+    const {onScrollError} = this.props;
+    if (onScrollError && errorArr?.[0]) {
+      const {layout} = errorArr[0];
+      onScrollError(layout.y);
+    }
     return {errors: errorArr, values: formControl[uid].value};
   };
 
@@ -258,6 +282,7 @@ class Form extends Component<IFormProps> {
           key,
           errorsValue[key],
           uid,
+          true,
         );
       },
     );
@@ -383,6 +408,47 @@ const ItemForm = (props: IItemProps) => {
 };
 
 Form.Item = ItemForm;
+
+const ScrollView = (props: ScrollViewProps & IFormProps) => {
+  const {
+    initialValues,
+    validateFirst,
+    style,
+    colon,
+    formItemLayout,
+    dotRequired,
+    form,
+    hiddenRequired,
+    children,
+    ...p
+  } = props;
+  const propsForm = {
+    initialValues,
+    validateFirst,
+    style,
+    colon,
+    formItemLayout,
+    dotRequired,
+    form,
+    hiddenRequired,
+  };
+
+  const refScroll = useRef<ScrollViewLibrary | null>(null);
+
+  const onScrollError = useCallback(y => {
+    refScroll.current?.scrollTo({y, animated: true});
+  }, []);
+
+  return (
+    <ScrollViewLibrary ref={refScroll} {...p}>
+      <Form {...propsForm} onScrollError={onScrollError}>
+        {children}
+      </Form>
+    </ScrollViewLibrary>
+  );
+};
+
+Form.ScrollView = ScrollView;
 
 Form.create = () => {
   return (WrapComponent: React.ComponentType<any>) =>

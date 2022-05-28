@@ -1,6 +1,6 @@
 # API
 
-## Form
+## Form or Form.ScrollView `Support scroll to the first error field`
 
 #### hiddenRequired <boolean>
 
@@ -237,7 +237,7 @@ const App = () => {
 
   return (
     <SafeAreaView style={styles.view}>
-      <Form dotRequired="after">
+      <Form.ScrollView form={form1}>
         <Form.Item
           name="input"
           label="Input"
@@ -285,7 +285,7 @@ const App = () => {
             console.log(errors, values);
           }}
         />
-      </Form>
+      </Form.ScrollView>
     </SafeAreaView>
   );
 };
@@ -419,6 +419,5 @@ const form3 = useForm();
       }}
     />
   </Form>
-  ;
 </Form>;
 ```

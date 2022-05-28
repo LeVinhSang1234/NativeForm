@@ -130,6 +130,7 @@ class Item extends Component<
         val: string | undefined = undefined,
         error: string,
         detectValidate?: boolean,
+        isReset?: boolean,
       ) => {
         const {initialValues, valueState} = this.state;
         if (!detectValidate && onChangeInput) {
@@ -151,7 +152,8 @@ class Item extends Component<
           if (
             rule.required &&
             !v &&
-            (!rule.trigger || rule.trigger === 'onChange' || detectValidate)
+            (!rule.trigger || rule.trigger === 'onChange' || detectValidate) &&
+            !isReset
           ) {
             if (rule.message) {
               newValue.error = rule.message;
@@ -162,7 +164,8 @@ class Item extends Component<
           if (
             rule.validator &&
             typeof rule.validator === 'function' &&
-            (rule.trigger === 'onChange' || !rule.trigger || detectValidate)
+            (rule.trigger === 'onChange' || !rule.trigger || detectValidate) &&
+            !isReset
           ) {
             rule.validator(
               v,

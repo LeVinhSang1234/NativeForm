@@ -120,6 +120,10 @@ Function(fieldName: string) => boolean
 
 `!must be inside the Form`
 
+#### children ``function({onChangeValue, value, onBlur, error}: ChildrenItem) => any``
+- example below
+- onBlur must be required when rule.trigger === "blur"
+
 #### styles
 
 - error: TextStyle, style label error
@@ -236,8 +240,24 @@ const App = () => {
         <Form.Item
           name="input"
           label="Input"
-          rule={{required: true, message: 'Validate Field'}}>
-          <Input />
+          rule={{
+            required: true,
+            message: 'Validate Field',
+            trigger: 'blur',
+            whitespace: true,
+          }}>
+          {({onChangeValue, value, onBlur, error}: ChildrenItem) => {
+            return (
+              <Input
+                multiline
+                placeholder="Aa"
+                onChangeText={onChangeValue}
+                value={value}
+                error={error}
+                onBlur={onBlur}
+              />
+            );
+          }}
         </Form.Item>
         <Form.Item name="input2" label="Input2" rule={{validator: validator}}>
           <Input />

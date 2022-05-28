@@ -1,6 +1,7 @@
 import React, {Fragment} from 'react';
 import {Button} from 'react-native';
 import Form, {Input, Radio, RadioGroup} from './packages';
+import {ChildrenItem} from './packages/Form/types';
 
 const FormClass = () => {
   const form1 = Form.useForm();
@@ -14,8 +15,20 @@ const FormClass = () => {
             required: true,
             message: 'Validate Field',
             trigger: 'blur',
+            whitespace: true,
           }}>
-          <Input multiline placeholder="Aa" />
+          {({onChangeValue, value, onBlur, error}: ChildrenItem) => {
+            return (
+              <Input
+                multiline
+                placeholder="Aa"
+                onChangeText={onChangeValue}
+                value={value}
+                error={error}
+                onBlur={onBlur}
+              />
+            );
+          }}
         </Form.Item>
         <Form.Item
           name="radio"

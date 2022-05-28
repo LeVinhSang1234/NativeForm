@@ -1,13 +1,21 @@
 import {ReactChild} from 'react';
 import {TextStyle, ViewStyle} from 'react-native';
 
+export declare type ChildrenItem = {
+  onChangeValue?: (v: any) => any;
+  value?: any;
+  error?: any;
+  onBlur?: any; //required when rule.trigger === 'blur'
+  checked?: boolean;
+};
+
 export declare type IItemProps = {
   styles?: {
     error: TextStyle;
     label: TextStyle;
     colon: TextStyle;
   };
-  children?: any;
+  children?: ((object: ChildrenItem) => any) | any;
   defaultValue?: any;
   checked?: boolean;
   name: string;
@@ -29,8 +37,8 @@ export declare type IItemProps = {
     trigger?: 'onChange' | 'blur';
   };
   validateFirst?: boolean;
-  onChangeValue?: (v: any) => any;
-  onChangeText?: (v: any) => any;
+  onChangeValue?: (value: any) => any;
+  onChangeText?: (value: any) => any;
   onChangeInput?: (v: any) => any;
   label?: any;
   colon?: string;

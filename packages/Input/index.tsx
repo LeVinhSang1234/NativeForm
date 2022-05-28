@@ -6,6 +6,7 @@ import {
   PlatformColor,
   StyleSheet,
   TextInput,
+  TextInputChangeEventData,
   TextInputFocusEventData,
   TextInputProps,
   TextStyle,
@@ -20,6 +21,7 @@ export declare type ITextInputProps = {
   activeBorderColor?: string;
   rangeBorderColor?: string;
   borderColor?: string;
+  onChangeInput?: (v: NativeSyntheticEvent<TextInputChangeEventData>) => any;
 };
 
 interface IState {
@@ -88,6 +90,7 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
       rangeBorderColor = '#ff4d4f',
       borderColor: borderColorProps = '#d9d9d9',
       styleInput,
+      onChangeInput,
       ...props
     } = this.props;
     const borderColor = this.animatedInput.interpolate({
@@ -104,7 +107,7 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
           {...props}
           style={[{color}, styleInput]}
           placeholderTextColor={PlatformColor('placeholderText')}
-          onChange={undefined}
+          onChange={onChangeInput}
           onChangeText={onChangeText}
           onBlur={this.onBlur}
           onFocus={this.onFocus}>

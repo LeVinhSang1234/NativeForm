@@ -4,13 +4,17 @@ import {
   NativeSyntheticEvent,
   Platform,
   PlatformColor,
+  Pressable,
   StyleSheet,
   TextInput,
+  TextInputChangeEventData,
   TextInputFocusEventData,
   TextInputProps,
   TextStyle,
   ViewStyle,
 } from 'react-native';
+
+const PressAnimated = Animated.createAnimatedComponent(Pressable);
 
 export declare type ITextInputProps = {
   error?: string | boolean;
@@ -20,6 +24,7 @@ export declare type ITextInputProps = {
   activeBorderColor?: string;
   rangeBorderColor?: string;
   borderColor?: string;
+  onChangeInput?: (v: NativeSyntheticEvent<TextInputChangeEventData>) => any;
 };
 
 interface IState {
@@ -28,6 +33,7 @@ interface IState {
 
 class Input extends Component<ITextInputProps & TextInputProps, IState> {
   animatedInput: Animated.Value;
+  TextInput?: TextInput | null;
   constructor(props: ITextInputProps & TextInputProps) {
     super(props);
     const {error} = props;
@@ -88,6 +94,8 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
       rangeBorderColor = '#ff4d4f',
       borderColor: borderColorProps = '#d9d9d9',
       styleInput,
+      onChangeInput,
+      multiline,
       ...props
     } = this.props;
     const borderColor = this.animatedInput.interpolate({
@@ -97,20 +105,27 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
     const color = PlatformColor(
       Platform.OS === 'ios' ? 'label' : '?android:attr/textColor',
     );
+    const paddingTop = multiline ? 6 : 11;
     return (
-      <Animated.View style={[styles.input, {borderColor}, style]}>
+      <PressAnimated
+        style={[styles.input, {borderColor}, {paddingTop}, style]}
+        onPress={() => {
+          this.TextInput?.focus?.();
+        }}>
         <TextInput
+          ref={ref => (this.TextInput = ref)}
           textAlignVertical="center"
           {...props}
+          multiline={multiline}
           style={[{color}, styleInput]}
           placeholderTextColor={PlatformColor('placeholderText')}
-          onChange={undefined}
+          onChange={onChangeInput}
           onChangeText={onChangeText}
           onBlur={this.onBlur}
           onFocus={this.onFocus}>
           {value}
         </TextInput>
-      </Animated.View>
+      </PressAnimated>
     );
   }
 }
@@ -125,7 +140,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
     textAlignVertical: 'center',
     fontSize: 14,
-    paddingTop: 7.5,
   },
 });
 

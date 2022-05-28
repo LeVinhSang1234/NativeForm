@@ -147,28 +147,31 @@ class Item extends Component<
         }
         if (error) {
           newValue.error = error;
-        } else if (
-          rule.required &&
-          !v &&
-          (rule.trigger === 'onChange' || detectValidate)
-        ) {
-          if (rule.message) {
-            newValue.error = rule.message;
-          } else {
-            newValue.error = 'Field is required';
+        } else {
+          if (
+            rule.required &&
+            !v &&
+            (!rule.trigger || rule.trigger === 'onChange' || detectValidate)
+          ) {
+            if (rule.message) {
+              newValue.error = rule.message;
+            } else {
+              newValue.error = 'Field is required';
+            }
           }
-        } else if (
-          rule.validator &&
-          typeof rule.validator === 'function' &&
-          (rule.trigger === 'onChange' || !rule.trigger || detectValidate)
-        ) {
-          rule.validator(
-            v,
-            (message: string | undefined) => {
-              newValue.error = message;
-            },
-            form.touched,
-          );
+          if (
+            rule.validator &&
+            typeof rule.validator === 'function' &&
+            (rule.trigger === 'onChange' || !rule.trigger || detectValidate)
+          ) {
+            rule.validator(
+              v,
+              (message: string | undefined) => {
+                newValue.error = message;
+              },
+              form.touched,
+            );
+          }
         }
         if (newValue.error) {
           if (errors[name] !== newValue.error) {
@@ -209,8 +212,6 @@ class Item extends Component<
       children,
       onChangeText,
       onChangeValue,
-      onBlur,
-      onBlurInput,
       styles: stylesProps,
       hiddenRequired,
     } = this.props;
@@ -236,28 +237,25 @@ class Item extends Component<
           </View>
         </View>
         <View style={styleSpanWrapCol}>
-          {{
-            ...children,
-            props: {
-              ...children.props,
-              value: valueState.value,
-              error: valueState.error,
-              onChangeValue: (value: any) => onChangeValue?.(value),
-              onChangeText: (value: string) => onChangeText?.(value),
-              checked: !!valueState.value,
-              onBlur: (e: NativeEventEmitter) => {
-                if (typeof onBlur === 'function') {
-                  onBlur(e);
-                }
-                if (
-                  typeof onBlurInput === 'function' &&
-                  rule.trigger === 'blur'
-                ) {
-                  onBlurInput(valueState.value);
-                }
-              },
-            },
-          }}
+          {typeof children === 'function'
+            ? children({
+                onChangeValue,
+                ...valueState,
+                checked: !!valueState.value,
+                onBlur: this.onBlurFunctionChild,
+              })
+            : {
+                ...children,
+                props: {
+                  ...children.props,
+                  value: valueState.value,
+                  error: valueState.error,
+                  onChangeValue: (value: any) => onChangeValue?.(value),
+                  onChangeText: (value: string) => onChangeText?.(value),
+                  checked: !!valueState.value,
+                  onBlur: this.blurInput,
+                },
+              }}
           <View style={styles.error} removeClippedSubviews>
             <TextAnimated
               style={[
@@ -276,16 +274,29 @@ class Item extends Component<
     );
   };
 
+  onBlurFunctionChild = () => {
+    const {valueState} = this.state;
+    const {form, name} = this.props;
+    form.ref[name](valueState.value, valueState.error, true);
+  };
+
+  blurInput = (e: NativeEventEmitter) => {
+    const {name, onBlur, onBlurInput, rule} = this.props;
+    const {valueState} = this.state;
+    if (typeof onBlur === 'function') {
+      onBlur(e);
+    }
+    if (typeof onBlurInput === 'function' && rule?.trigger === 'blur') {
+      onBlurInput(name, valueState.value);
+    }
+  };
+
   render() {
     const {
       children,
-      name,
-      rule = {},
       onChangeValue,
       onChangeText,
       label,
-      onBlurInput,
-      onBlur,
       styles: stylesProps,
     } = this.props;
     const {valueState} = this.state;
@@ -302,28 +313,25 @@ class Item extends Component<
 
     return (
       <View>
-        {{
-          ...children,
-          props: {
-            ...children.props,
-            value: valueState.value,
-            error: valueState.error,
-            onChangeValue: (value: any) => onChangeValue?.(value),
-            onChangeText: (value: string) => onChangeText?.(value),
-            checked: !!valueState.value,
-            onBlur: (e: NativeEventEmitter) => {
-              if (typeof onBlur === 'function') {
-                onBlur(e);
-              }
-              if (
-                typeof onBlurInput === 'function' &&
-                rule.trigger === 'blur'
-              ) {
-                onBlurInput(name, valueState.value);
-              }
-            },
-          },
-        }}
+        {typeof children === 'function'
+          ? children({
+              onChangeValue,
+              ...valueState,
+              checked: !!valueState.value,
+              onBlur: this.onBlurFunctionChild,
+            })
+          : {
+              ...children,
+              props: {
+                ...children.props,
+                value: valueState.value,
+                error: valueState.error,
+                onChangeValue: (value: any) => onChangeValue?.(value),
+                onChangeText: (value: string) => onChangeText?.(value),
+                checked: !!valueState.value,
+                onBlur: this.blurInput,
+              },
+            }}
         <View style={styles.error} removeClippedSubviews>
           <TextAnimated
             style={[

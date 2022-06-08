@@ -102,9 +102,10 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
       inputRange: [0, 1, 2],
       outputRange: [borderColorProps, activeBorderColor, rangeBorderColor],
     });
-    const color = PlatformColor(
-      Platform.OS === 'ios' ? 'label' : '?android:attr/textColor',
-    );
+    const color = Platform.select({
+      default: PlatformColor('label'),
+      android: PlatformColor('?android:attr/textColor'),
+    });
     const paddingTop = multiline ? 6 : 11;
     return (
       <PressAnimated
@@ -115,10 +116,13 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
         <TextInput
           ref={ref => (this.TextInput = ref)}
           textAlignVertical="center"
+          placeholderTextColor={Platform.select({
+            default: PlatformColor('placeholderText'),
+            android: PlatformColor('?android:attr/placeholderText'),
+          })}
           {...props}
           multiline={multiline}
           style={[{color}, styleInput]}
-          placeholderTextColor={PlatformColor('placeholderText')}
           onChange={onChangeInput}
           onChangeText={onChangeText}
           onBlur={this.onBlur}

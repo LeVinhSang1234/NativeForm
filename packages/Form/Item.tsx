@@ -284,13 +284,13 @@ class Item extends Component<
   };
 
   blurInput = (e: NativeEventEmitter) => {
-    const {name, onBlur, onBlurInput, rule} = this.props;
+    const {onBlur, onBlurInput, rule} = this.props;
     const {valueState} = this.state;
     if (typeof onBlur === 'function') {
       onBlur(e);
     }
     if (typeof onBlurInput === 'function' && rule?.trigger === 'blur') {
-      onBlurInput(name, valueState.value);
+      onBlurInput(valueState.value);
     }
   };
 

@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {Button, SafeAreaView, StyleSheet} from 'react-native';
 import Form, {Input, Radio, RadioGroup} from './packages';
-import DatePicker from './packages/DatePicker';
 import {ChildrenItem} from './packages/Form/types';
 
 const App = () => {
-  const [state, setState] = useState('dadsa')
   const form1 = Form.useForm();
   return (
     <SafeAreaView style={styles.view}>
-      <Form.ScrollView initialValues={{date: new Date()}}>
+      <Form.ScrollView>
         <Form.Item
           name="input"
           label="Input qqeqweq eq meq eqweqw ewqwqewqewq 123213123 1232132131231221"
@@ -51,12 +49,6 @@ const App = () => {
             <Radio label="hahaha121221321" value="haha" />
             <Radio label="hahaha 213213213" value="hahu" />
           </RadioGroup>
-        </Form.Item>
-        <Form.Item
-          name="date"
-          label="date"
-          rule={{required: true, message: 'Validate Field'}}>
-          <DatePicker />
         </Form.Item>
         <Button
           title="Submit"

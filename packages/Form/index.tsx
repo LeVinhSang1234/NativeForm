@@ -1,3 +1,4 @@
+// @refresh reset
 import React, {
   Component,
   ReactChild,
@@ -107,10 +108,9 @@ class Form extends Component<
     let uid = form?.uid || uuid;
     formControl[uid].validateFirst = validateFirst;
     initialValuesHandle[uid] = initialValues;
-    const data = Object.keys(initialValues).map(async key => {
-      formControl[uid].value[key] = initialValues[key];
-    });
-    await Promise.all(data);
+    Object.keys(initialValues).map(
+      async key => (formControl[uid].value[key] = initialValues[key]),
+    );
   };
 
   UNSAFE_componentWillReceiveProps(nProps: IFormProps) {
@@ -378,6 +378,7 @@ const ItemForm = (props: IItemProps) => {
       delete form?.value?.[nameProps];
       delete form?.touched?.[nameProps];
       delete initialValuesHandle?.[uid]?.[nameProps];
+      delete formControl[uid]?.value?.[nameProps];
     };
   }, [form?.ref, form?.touched, form?.value, nameProps, uid]);
 

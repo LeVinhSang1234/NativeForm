@@ -377,8 +377,10 @@ const ItemForm = (props: IItemProps) => {
       delete form?.ref?.[nameProps];
       delete form?.value?.[nameProps];
       delete form?.touched?.[nameProps];
-      delete initialValuesHandle?.[uid]?.[nameProps];
-      delete formControl[uid]?.value?.[nameProps];
+      if (uid !== uuid) {
+        delete initialValuesHandle?.[uid]?.[nameProps];
+        delete formControl[uid]?.value?.[nameProps];
+      }
     };
   }, [form?.ref, form?.touched, form?.value, nameProps, uid]);
 

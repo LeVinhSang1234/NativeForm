@@ -18,7 +18,7 @@ interface IProps {
   dotColorChecked?: string;
   disabled?: boolean;
   defaultChecked?: boolean;
-  onChangeValue?: (c: boolean, v: any) => any;
+  onChangeValue?: (c: boolean, v?: any) => any;
   style?: ViewStyle;
   label?: string;
   styleLabel?: TextStyle;

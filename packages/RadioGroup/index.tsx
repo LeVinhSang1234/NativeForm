@@ -16,20 +16,17 @@ class RadioGroup extends Component<IRadioGroup> {
 
   renderChild = (child: any, isLast?: boolean) => {
     const {value, horizontal, error} = this.props;
-    return {
-      ...child,
-      props: {
-        ...child.props,
-        error,
-        style: [
-          styles.child,
-          {marginRight: horizontal && !isLast ? 16 : 0},
-          child.props.style,
-        ],
-        onChangeValue: this.onChangeValue,
-        checked: value === child.props.value,
-      },
-    };
+    return React.cloneElement(child, {
+      key: child.props.value,
+      error,
+      style: [
+        styles.child,
+        {marginRight: horizontal && !isLast ? 16 : 0},
+        child.props.style,
+      ],
+      onChangeValue: this.onChangeValue,
+      checked: value === child.props.value,
+    });
   };
 
   render() {

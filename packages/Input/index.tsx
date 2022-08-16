@@ -18,13 +18,13 @@ const PressAnimated = Animated.createAnimatedComponent(Pressable);
 
 export declare type ITextInputProps = {
   error?: string | boolean;
-  onChangeText?: (v: string) => any;
+  onChangeValue?: (v: string) => any;
   style?: ViewStyle;
   styleInput?: TextStyle;
   activeBorderColor?: string;
   rangeBorderColor?: string;
   borderColor?: string;
-  onChangeInput?: (v: NativeSyntheticEvent<TextInputChangeEventData>) => any;
+  onChange?: (v: NativeSyntheticEvent<TextInputChangeEventData>) => any;
 };
 
 interface IState {
@@ -88,13 +88,13 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
   render() {
     const {
       style,
-      onChangeText,
       value,
       activeBorderColor = '#40a9ff',
       rangeBorderColor = '#ff4d4f',
       borderColor: borderColorProps = '#d9d9d9',
       styleInput,
-      onChangeInput,
+      onChange,
+      onChangeValue,
       multiline,
       ...props
     } = this.props;
@@ -123,8 +123,8 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
           {...props}
           multiline={multiline}
           style={[{color}, styleInput]}
-          onChange={onChangeInput}
-          onChangeText={onChangeText}
+          onChange={onChange}
+          onChangeText={onChangeValue}
           onBlur={this.onBlur}
           onFocus={this.onFocus}>
           {value}

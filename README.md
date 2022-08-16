@@ -1,423 +1,686 @@
+<h1 style="color: #ff4d4f">Note: from ver 2.0.0 and above, the structure and props passed in have changed.<h1>
+
+<a href="#example">Click here to Example</a>
+
 # API
 
 ## Form or Form.ScrollView `Support scroll to the first error field`
 
-#### hiddenRequired <boolean>
+```ts
+type Form = {
+  form?: FormInstance;
+  colon?: boolean;
+  initialValues?: {[key: string]: any};
+  labelAlign?: 'left' | 'right';
+  name?: string;
+  preserve?: boolean;
+  requiredMark?: boolean | string;
+  requiredMarkStyle?: TextStyle;
+  requiredMarkPosition?: 'before' | 'after';
+  validateMessages?: ValidateMessages;
+  validateTrigger?: 'onChange' | 'onBlur';
+  onValuesChange?: (values: {[key: string]: any}) => void;
+  errorStyle?: TextStyle;
+};
+```
 
-hide label \* required
+---
 
-#### colon:
+- form `<FormInstance>` <a href="#forminstance">Click to here</a>
 
-Configure the default value of colon for Form.Item. Indicates whether the colon after the label is displayed (only effective when prop layout is horizontal)
-
-#### form (FormInstance)
-
-Form control instance created by Form.useForm() or Form.create()(Component).
+```
+Form control instance created by Form.useForm() with Hooks
+or Form.create(Component) with Class Component.
 Automatically created when not provided
-
-#### initialValues (object)
-
-Set value by Form initialization or reset
-
-#### validateFirst (boolean)
-
-Whether stop validate on first rule of error for this field.
-
-#### style <ViewStyle>
-
-#### formItemLayout
-
-```
-labelCol: {
-    xs: number;
-    sm: number;
-};
-wrapperCol: {
-    xs: number;
-    sm: number;
-};
 ```
 
-#### dotRequired ("before" | "after")
-
-Configure the default value of _ label for Form.Item. Indicates whether the _ label the display before or after label form Item
-
-## FormInstance
-
-#### setFieldsValue
-
-Set the value of fields.
+- colon `<Boolean>`
 
 ```
-({[fieldName]: value }, {[fieldName]: error}) => void
+Configure the default value of colon for Form.Item.
+Indicates whether the colon after the label is displayed
+(only effective when prop layout is horizontal)
 ```
 
-#### setFieldValue
-
-Set the value of a field.
+- initialValues `{[key: string]: any}`
 
 ```
-([fieldName], value, error) => void
+Default Values by form
 ```
 
-#### getFieldValue
-
-Get the value of a field.
+- labelAlign `<'left' | 'right'>`
 
 ```
-Function(fieldName: string)
+The text align of label of all items
 ```
 
-#### getFieldsValue
-
-Get the specified fields' values. If you don't specify a parameter, you will get all fields' values.
+- name `<String>`
 
 ```
-Function()
+Form name. Will be the prefix of Field id
 ```
 
-#### validateFields
+- preserve `<Boolean>`
 
-Validate the specified fields and get their values and errors. If you don't specify the parameter of fieldNames, you will validate all fields.
+```
+Keep field value even when field removed
+```
+
+- requiredMark `<Boolean | String>`
+
+```
+Required mark style. Can use required mark or optional mark.
+You can not config to single Form.Item since this is a Form level config
+```
+
+- requiredMarkStyle `<TextStyle>`
+
+```
+Custom mark styleSheet
+```
+
+- requiredMarkPosition `<'before' | 'after'>`
+
+```
+- Default: before
+
+Config position required mark or optional mark
+```
+
+- validateMessages `<ValidateMessages>`
 
 ```js
-(
-  callback(
-    errors: {[fieldName]: any,  layout: {x: number, y: number, height: number, width: number}}[],
-    values: {[key: string]: any}
-  ),
-  {fields: fieldNames: string[], excepts: fieldNames: string[]}
-) => Promise<{errors, values}>
+Validation prompt template
+
+const validateMessages = {
+  required: '${name} is required',
+  whitespace: '${name} cannot be empty',
+  len: '${name} must be exactly ${len} characters',
+  min: '${name} must be less than ${min}',
+  max: '${name} cannot be greater than ${max}',
+  pattern: '${name} does not match pattern ${pattern}',
+  enum: '${name} must be one of ${enum}',
+};
 ```
 
-#### resetFields
-
-Reset the specified fields' value(to initialValue) and status. If you don't specify a parameter, all the fields will be reset.
+- validateTrigger `<'onChange' | 'onBlur'>`
 
 ```
-Function(fieldNames: string[], errors: {[fieldName]: any})
+- Default: onChange
+
+Config field validate trigger
 ```
 
-#### setFieldError
-
-Set the error of a field.
+- onValuesChange `(values: {[key: string]: any}) => void`
 
 ```
-Function(fieldName: string, error: any)
-
+Trigger when value updated
 ```
 
-#### getTouched
-
-get whether any of fields is touched
+- errorStyle `<TextStyle>`
 
 ```
-Function(fieldName: string) => boolean
-
+Configure the label message error form
 ```
 
 ## Form.Item
 
-`!must be inside the Form`
+<span style="color: #ff4d4f; font-weight: 700; font-size: 20px">! Must be inside the Form</span>
 
-#### children `function({onChangeValue, value, onBlur, error}: ChildrenItem) => any | any`
-
-- example below
-- onBlur must be required when rule.trigger === "blur"
-
-#### styles
-
-- error: TextStyle, style label error
-- label: TextStyle, style label
-- colon: TextStyle, style colon label
-
-#### defaultValue
-
-set the default value a field
-
-#### checked <boolean>
-
-set the checked value a field
-
-#### name <required>
-
-field name
-
-#### label <required>
-
-label text
-
-#### value
-
-field value
-
-#### rule
-
-Validation Rules
-
-- whitespace?: treat required fields that only contain whitespace as errors;
-
-- required?: indicates whether field is required;
-
-- message?: validation error message;
-
-- validator?: custom validate function (Note: callback must be called)
-
+```ts
+type FormItem = {
+  colon?: boolean;
+  getValueProps?: (value: any) => any;
+  hidden?: boolean;
+  initialValue?: any;
+  labelAlign?: 'left' | 'right';
+  validateFirst?: boolean;
+  valuePropName?: 'number' | 'string' | 'checked';
+  children: React.ReactNode |
+  (
+    handle: {
+      onChangeValue: (value: any) => any;
+      onBlur: () => any;
+      value?: any;
+      error?: string;
+    }
+  ) => JSX.Element
+  style?: ViewStyle | ViewStyle[];
+  errorStyle?: TextStyle;
+  labelStyle?: TextStyle;
+  preserve?: boolean;
+  name: string;
+  label?: string;
+  rules?: Rule[];
+  required?: boolean;
+  validateTrigger?: 'onChange' | 'onBlur';
+};
 ```
 
-Function(value: any, callback: (messageError?: any) => any, touched?: boolean) => any;
+- name `<String>` <span style="color: #ff4d4f">\* Required</span>
 
 ```
+Field name
+```
 
-- trigger?: 'onChange' | 'blur';
+- label `<String>`
 
-#### validateFirst
+```
+Label text
+```
 
+- initialValue `<any>`
+
+```
+Config sub default value. Form initialValues get higher priority when conflict
+```
+
+- required `<Boolean>`
+
+```
+Display required style. It will be generated by the validation rule
+```
+
+- validateFirst `<Boolean >`
+
+```
 Whether stop validate on first rule of error for this field.
+Will parallel validate when parallel cofigured
+```
 
-#### colon
-
-Configure the default value of colon for Form.Item. Indicates whether the colon after the label is displayed (only effective when prop layout is horizontal)
-
-#### dotRequired
-
-Configure the default value of _ label for Form.Item. Indicates whether the _ label the display before or after label form Item
-
-#### formItemLayout
+- validateTrigger `<'onChange' | 'onBlur'>`
 
 ```
-labelCol: {
-    xs: number;
-    sm: number;
-};
-wrapperCol: {
-    xs: number;
-    sm: number;
+Default: onChange
+
+When to validate the value of children node
+```
+
+- rules `<Rule[]>`
+
+```ts
+type Rule = {
+  required?: boolean; //Display required style. It will be generated by the validation rule
+  enum?: any[]; //Match enum value. You need to set type to enum to enable this
+  len?: number; //Length of string
+  max?: number; // max of number
+  min?: number; // min of number
+  message?: string; //Error message. Will auto generate by template if not provided
+  pattern?: RegExp; //Regex pattern
+  transform?: (value: any) => any; //Transform value to the rule before validation
+  validateTrigger?: 'onChange' | 'onBlur';
+  validator?: (
+    rule: Rule,
+    value: any,
+    callback: (errorMessage?: string) => void,
+  ) => Promise<void | Error>; //Customize validation rule. Accept Promise as return. See example
+  whitespace?: boolean; //Failed if only has whitespace
 };
 ```
+
+```js
+//Rules for field validation.
+import React, {Component} from 'react';
+import Form, {Input} from '@form-rn/form';
+
+class App extends Component {
+  render() {
+    return (
+      <Form.ScrollView>
+        <Form.Item
+          required={true}
+          validateTrigger="onBlur"
+          name="field_name"
+          label="Example Children type of JSX.Element"
+          initialValue="initialValue"
+          rules={[
+            {required: true, message: 'Field is required'},
+            {
+              validator: (rule, value) => {
+                if (value) {
+                  return Promise.resolve();
+                }
+                return Promise.reject('Field is required');
+              },
+              validateTrigger: 'onBlur',
+            },
+            {
+              validator: (rule, value, callback) => {
+                if (value) {
+                  callback();
+                } else {
+                  callback('Field is required');
+                }
+              },
+            },
+          ]}>
+          <Input placeholder="2" />
+        </Form.Item>
+      </Form.ScrollView>
+    );
+  }
+}
+```
+
+- children `<JSX.Element | ({onChangeValue, value, onBlur, error}) => any>`
+
+```js
+//children was supported type of functional
+//onBlur must be required when rules.trigger or validateTrigger is onBlur
+import React, {Component} from 'react';
+import Form, {Input} from '@form-rn/form';
+
+class App extends Component {
+  render() {
+    return (
+      <Form.ScrollView>
+        <Form.Item
+          name="children"
+          initialValue="12"
+          label="Example Children type of function">
+          {({onChangeValue, value, onBlur, error}) => {
+            console.log(value, onBlur, error);
+            return (
+              <Input
+                placeholder="2"
+                onChangeValue={onChangeValue}
+                value={value}
+                onBlur={onBlur}
+                error={error}
+              />
+            );
+          }}
+        </Form.Item>
+      </Form.ScrollView>
+    );
+  }
+}
+```
+
+- colon `<Boolean>`
+
+```
+Used with label, whether to display : after label text.
+```
+
+- getValueProps `<(value: any) => any>`
+
+```
+Additional props with sub component
+Convert data onChange
+```
+
+- valuePropName `<'number' | 'string' | 'checked'>`
+
+```
+Props of children node, for example, the prop of Switch is 'checked'.
+This prop is an encapsulation of getValueProps, which will be invalid after customizing getValueProps
+```
+
+- hidden `<Boolean>`
+
+```
+Whether to hide Form.Item (still collect and validate value)
+```
+
+- labelAlign `<'left' | 'right'>`
+
+```
+The text align of label
+```
+
+- style `<ViewStyle | ViewStyle[]>`
+
+```
+Stylesheet Field
+```
+
+- errorStyle `<TextStyle>`
+
+```
+Configure the label message error form
+
+```
+
+- labelStyle `<TextStyle>`
+
+```
+Configure the label stylesheet
+```
+
+- preserve `<Boolean>`
+
+```
+Keep field value even when field removed
+```
+
+---
+
+## FormInstance
+
+<span style="color: #ff4d4f">If you code like below then all the function of FormInstance will return about under an object like {idForm1: values, idForm2: values}</span>
+
+```js
+<Form name="idForm1">
+  <Form.Item name="field_name" label="Example">
+    <Input placeholder="2" />
+  </Form.Item>
+</Form>
+<Form name="idForm1">
+  <Form.Item name="field_name2" label="Example2">
+    <Input placeholder="2" />
+  </Form.Item>
+</Form>
+```
+
+- getFieldError `(name: string) => Promise<(string | undefined)>`
+
+```
+Get the error messages by the field name
+```
+
+- getFieldsError
+
+`(names?: string[]) => Promise<{[key: string]: string | undefined}>`
+
+```
+Get the error messages by the fields name. Return as an array
+```
+
+- getFieldsValue
+
+`(names?: string[], filter?: (meta: { touched: boolean, validating: boolean }) => boolean) => Promise<any>`
+
+```
+Get values by a set of field names.
+Return according to the corresponding structure.
+Default return mounted field value, but you can use getFieldsValue() to get all values
+```
+
+- getFieldValue `(name: string) => Promise<any>`
+
+```
+Get the value by the field name
+```
+
+- isFieldsTouched `(names?: string[], allTouched?: boolean) => Promise<boolean>`
+
+```
+Check if fields have been operated.
+Check if all fields is touched when allTouched is true
+```
+
+- isFieldTouched `(name: string) => Promise<boolean>`
+
+```
+Check if a field has been operated
+```
+
+- isFieldValidating `(name: string) => Promise<boolean>`
+
+```
+Check field if is in validating
+```
+
+- resetFields `(fields?: string[]) => Promise<void>`
+
+```
+Reset fields to initialValues
+```
+
+- setFields `(fields: FieldData[]) => Promise<void>`
+
+```ts
+type FieldData = {
+  error?: string; //Error messages
+  name: string; //Field name path;
+  touched?: boolean; //Whether is operated
+  validating?: boolean; //Whether is in validating
+  value: any; //Field value
+}
+
+Set fields status
+```
+
+- setFieldValue `(name: string, value: any) => Promise<any>`
+
+```
+Set fields value(Will directly pass to form store.
+If you do not want to modify passed object, please clone first)
+```
+
+- setFieldsValue `(values: {[key: string]: any}) => Promise<any>`
+
+```
+Set fields value(Will directly pass to form store.
+If you do not want to modify passed object, please clone first).
+```
+
+- validateFields `(names?: string[]) => Promise<ValueValidateField>`
+
+```ts
+type ValueValidateField = {
+  values: {
+    [key: string]: any;
+  };
+  errors?: {
+    [key: string]: {
+      errors: string[];
+      layout: LayoutRectangle;
+    };
+  }[];
+};
+```
+
+```
+Validate fields and return errors and values
+```
+
+---
 
 ## Input `<TextInputProps>`
 
 https://reactnative.dev/docs/textinput
 
-#### error `<Boolean>`
+- error `<Boolean>`
 
-preview border error input
+```
+Preview border error input
+```
 
-#### style `<ViewStyle>`
+- style `<ViewStyle>`
 
-#### styleInput `<TextStyle>`
+```
+Stylesheet wrap view Input
+```
 
-Style View Input
+- styleInput `<TextStyle>`
+
+```
+Stylesheet Input
+```
+
+---
 
 ## Radio
 
+---
+
 ## RadioGroup
+
+---
 
 # Example
 
 ```js
-//Function Component
-
-import React, {useCallback} from 'react';
-import {Button, SafeAreaView, StyleSheet} from 'react-native';
-import Form, {Input, Radio, RadioGroup} from '@form-rn/form';
+//Function Componet
+import React from 'react';
+import Form, {Input} from '@form-rn/form';
+import {Button} from 'react-native';
 
 const App = () => {
-  const validator = useCallback((value, callback, touched) => {
-    console.log(touched);
-    if (!value) {
-      callback('validate field');
-    } else {
-      callback();
-    }
+  const form = useForm();
+
+  //If you code using React Hooks then you have to add the below code in the file you are editing
+  // Add Form.fastRefresh() and Form.unMount() follow below
+  useEffect(() => {
+    Form.fastRefresh();
+    return Form.unMount;
   }, []);
 
-  const form = Form.useForm();
-
   return (
-    <SafeAreaView style={styles.view}>
-      <Form.ScrollView form={form1}>
-        <Form.Item
-          name="input"
-          label="Input"
-          rule={{
-            required: true,
-            message: 'Validate Field',
-            trigger: 'blur',
-            whitespace: true,
-          }}>
-          {({onChangeValue, value, onBlur, error}: ChildrenItem) => {
-            return (
-              <Input
-                multiline
-                placeholder="Aa"
-                onChangeText={onChangeValue}
-                value={value}
-                error={error}
-                onBlur={onBlur}
-              />
-            );
-          }}
-        </Form.Item>
-        <Form.Item name="input2" label="Input2" rule={{validator: validator}}>
-          <Input />
-        </Form.Item>
-        <Form.Item name="input2" label="Input2" rule={{validator: validator}}>
-          <RadioGroup horizontal>
-            <Radio label="radio1" value="radio1" />
-            <Radio label="radio2" value="radio2" />
-            <Radio label="radio3" value="radio3" />
-          </RadioGroup>
-        </Form.Item>
-        <Button
-          title="Submit"
-          onPress={() => {
-            form.validateFields((errors, values) => {
-              console.log(errors, values);
-            });
-          }}
-        />
-        <Button
-          title="Submit Async"
-          onPress={async () => {
-            const {errors, values} = await form.validateFields();
-            console.log(errors, values);
-          }}
-        />
-      </Form.ScrollView>
-    </SafeAreaView>
+    <Form.ScrollView initialValues={{example: 'example'}}>
+      <Form.Item name="example" initialValue="12" label="Example">
+        <Input placeholder="2" />
+      </Form.Item>
+      <Form.Item name="radioGroup" label="Login2" required validateFirst>
+        <RadioGroup>
+          <Radio value={1} label="radio 1" />
+          <Radio value={2} label="radio 2" />
+          <Radio value={3} label="radio 3" />
+        </RadioGroup>
+      </Form.Item>
+      <Form.Item name="radio" label="Login2" required validateFirst>
+        <Radio label="radio 1" />
+      </Form.Item>
+      <Button
+        title="Get Value"
+        onPress={async () => {
+          const error = await form.getFieldError();
+          const errors = await form.getFieldsError();
+          const errorsWithNames = await form.getFieldsError(['example']);
+          const values = await form.getFieldsValue();
+          const valuesWithNames = await form.getFieldsValue(['example']);
+          const valuesWithFilter = await form.getFieldsValue(
+            undefined,
+            (touched, validating) => touched && validating,
+          );
+          const value = await form.getFieldValue('example');
+          const isToucheds = await form.isFieldsTouched(undefined, true);
+          const isTouched = await form.isFieldTouched('example');
+          const isValidating = await form.isFieldValidating('example');
+          const data = await form.validateFields();
+          if (Array.isArray(data)) {
+            console.log('data is array', data);
+          } else console.log(data);
+        }}
+      />
+      <Button
+        title="Control Value"
+        onPress={async () => {
+          form.resetFields();
+          form.resetFields(['example']);
+          form.setFields([
+            {
+              name: 'example',
+              value: 'example1',
+              touched: true,
+              validating: true,
+            },
+          ]);
+          form.setFieldValue('example', 'example1');
+          form.setFieldsValue({example: 'example1'});
+        }}
+      />
+    </Form.ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
-  view: {
-    flex: 1,
-    marginHorizontal: 10,
-  },
-  input: {
-    height: 40,
-    borderWidth: 1,
-  },
-});
-
 export default App;
-```
 
-```js
+
 //Class Component
-
-import React, {Component} from 'react';
-import {Button, SafeAreaView, StyleSheet} from 'react-native';
+import React from 'react';
 import Form, {Input} from '@form-rn/form';
-
-class App extends Component {
-  validator = (value, callback, touched) => {
-    console.log(touched);
-    if (!value) {
-      callback('validate field');
-    } else {
-      callback();
-    }
-  };
-
+import {Button} from 'react-native';
+class App extends Component<{form: FormInstance}> {
   render() {
     const {form} = this.props;
     return (
-      <SafeAreaView style={styles.view}>
-        <Form dotRequired="after">
-          <Form.Item
-            name="input"
-            label="Input"
-            rule={{required: true, message: 'Validate Field'}}>
-            <Input />
-          </Form.Item>
-          <Button
-            title="Submit"
-            onPress={() => {
-              form.validateFields((errors, values) => {
-                console.log(errors, values);
-              });
-            }}
-          />
-          <Button
-            title="Submit Async"
-            onPress={async () => {
-              const {errors, values} = await form.validateFields();
-              console.log(errors, values);
-            }}
-          />
-        </Form>
-      </SafeAreaView>
+      <Form.ScrollView initialValues={{example: 'example'}}>
+        <Form.Item name="example" initialValue="12" label="Example">
+          <Input placeholder="2" />
+        </Form.Item>
+        <Button
+          title="Get Value"
+          onPress={async () => {
+            const error = await form.getFieldError();
+            const errors = await form.getFieldsError();
+            const errorsWithNames = await form.getFieldsError(['example']);
+            const values = await form.getFieldsValue();
+            const valuesWithNames = await form.getFieldsValue(['example']);
+            const valuesWithFilter = await form.getFieldsValue(
+              undefined,
+              (touched, validating) => touched && validating,
+            );
+            const value = await form.getFieldValue('example');
+            const isToucheds = await form.isFieldsTouched(undefined, true);
+            const isTouched = await form.isFieldTouched('example');
+            const isValidating = await form.isFieldValidating('example');
+            const data = await form.validateFields();
+            if (Array.isArray(data)) {
+              console.log('data is array', data);
+            } else console.log(data);
+          }}
+        />
+        <Button
+          title="Control Value"
+          onPress={async () => {
+            form.resetFields();
+            form.resetFields(['example']);
+            form.setFields([
+              {
+                name: 'example',
+                value: 'example1',
+                touched: true,
+                validating: true,
+              },
+            ]);
+            form.setFieldValue('example', 'example1');
+            form.setFieldsValue({example: 'example1'});
+          }}
+        />
+      </Form.ScrollView>
     );
   }
 }
 
-const styles = StyleSheet.create({
-  view: {
-    flex: 1,
-    marginHorizontal: 10,
-  },
-  input: {
-    height: 40,
-    borderWidth: 1,
-  },
-});
+export default Form.create(App);
 
-export default Form.create()(App);
-```
 
-```js
 // multiple Form
-
-const form1 = useForm();
-const form2 = useForm();
-const form3 = useForm();
-
-<Form form={form1} dotRequired="after">
-  <Form.Item
-    name="input"
-    label="Input"
-    rule={{required: true, message: 'Validate Field'}}>
-    <Input />
-  </Form.Item>
-  <Button
-    title="Submit Async"
-    onPress={async () => {
-      const {errors, values} = await form1.validateFields();
-      console.log(errors, values);
-    }}
-  />
-</Form>;
-
-<Form form={form2} dotRequired="after">
-  <Form.Item
-    name="input2"
-    label="Input"
-    rule={{required: true, message: 'Validate Field'}}>
-    <Input />
-  </Form.Item>
-  <Button
-    title="Submit Async"
-    onPress={async () => {
-      const {errors, values} = await form2.validateFields();
-      console.log(errors, values);
-    }}
-  />
-  <Form form={form3} dotRequired="after">
-    <Form.Item
-      name="input3"
-      label="Input"
-      rule={{required: true, message: 'Validate Field'}}>
-      <Input />
-    </Form.Item>
+import React from 'react';
+import Form, {Input} from '@form-rn/form';
+import {Button} from 'react-native';
+const App = () => {
+  const form1 = Form.useForm()
+  const form2 = Form.useForm()
+  const form3 = Form.useForm()
+  return (
+    <Form form={form1}>
+      <Form.Item name="example" initialValue="12" label="Example">
+        <Input placeholder="2" />
+      </Form.Item>
+    </Form>
+    <Form form={form2}>
+      <Form.Item name="example" initialValue="12" label="Example">
+        <Input placeholder="2" />
+      </Form.Item>
+      <Form form={form3}>
+        <Form.Item name="example" initialValue="12" label="Example">
+          <Input placeholder="2" />
+        </Form.Item>
+      </Form>
+    </Form>
     <Button
-      title="Submit Async"
+      title="Control Value"
       onPress={async () => {
-        const {errors, values} = await form3.validateFields();
-        console.log(errors, values);
+        form1.resetFields();
+        form2.resetFields();
+        form3.resetFields();
       }}
     />
-  </Form>
-</Form>;
+  )
+}
+
 ```

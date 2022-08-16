@@ -1,463 +1,518 @@
-// @refresh reset
-import React, {
-  Component,
-  ReactChild,
-  useCallback,
-  useEffect,
-  useRef,
-} from 'react';
+import React, {Component} from 'react';
+import {createID, FreezeChild} from '@/utils';
 import {
-  ScrollView as ScrollViewLibrary,
-  ScrollViewProps,
-  View,
-} from 'react-native';
-import Item from './Item';
-import {
-  IError,
-  IErrorForm,
-  IForm,
-  IFormHandle,
-  IFormHandleRemap,
-  IFormProps,
-  IItemProps,
-  IValueForm,
+  Create,
+  Form as FormTypes,
+  ParamsOnChangeValue,
+  TriggerAction,
+  FormInstance,
+  FieldData,
+  FilterGetValues,
+  ValueValidateField,
 } from './types';
+import Item from './Item';
+import {validate} from './validateItem';
+import {FormControlProvider, FormProps, FormValues} from '../provider';
+import {ScrollView as ScrollViewLibrary, ScrollViewProps} from 'react-native';
+import GarenateInitValue from './GarenateInitValue';
 
-const characters =
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-function random(r = 16) {
-  let a = '';
-  for (var t = characters.length, c = 0; c < r; c++) {
-    a += characters.charAt(Math.floor(Math.random() * t));
-  }
-  return a;
-}
-const uuid: string = random(26);
-const formControl: IForm = {
-  [uuid]: {
-    ref: {},
-    value: {},
-    touched: {},
-    validateFirst: false,
-    layout: {},
-  },
-};
+let formHandle: {[key: string]: FormInstance} = {};
+let controlRefresh: {
+  [key: string]: {fastRefresh: () => any; unmount: () => any};
+} = {};
 
-const initialValuesHandle: any = {};
+const methods: (keyof FormInstance)[] = [
+  'getFieldError',
+  'getFieldsError',
+  'getFieldsValue',
+  'getFieldValue',
+  'isFieldsTouched',
+  'isFieldTouched',
+  'isFieldValidating',
+  'resetFields',
+  'setFields',
+  'setFieldValue',
+  'setFieldsValue',
+  'validateFields',
+];
 
-const handle: any = {};
-const handleForm: IFormHandleRemap = {
-  setFieldsValue: () => null,
-  setFieldValue: () => null,
-  getFieldValue: () => undefined,
-  getFieldsValue: () => {},
-  validateFields: async () => undefined,
-  resetFields: () => undefined,
-  setFieldError: () => undefined,
-  getTouched: () => undefined,
-};
+class Form extends GarenateInitValue {
+  static contextType = FormValues;
+  static Item: typeof Item;
+  static ScrollView: typeof ScrollView;
+  static create: Create;
+  static useForm: () => FormInstance;
+  static fastRefresh: () => void;
+  static unMount: () => void;
+  id: string;
+  unmount: boolean;
 
-let errors: IError = {};
-
-class Form extends Component<
-  IFormProps & {onScrollError?: (y: number) => any}
-> {
-  static useForm: () => IFormHandle & {uid: string};
-  static Item: (props: IItemProps) => JSX.Element;
-  static create: () => (
-    WrapComponent: React.ComponentType<any>,
-  ) => React.ForwardRefExoticComponent<React.RefAttributes<unknown>>;
-  static ScrollView: (props: ScrollViewProps & IFormProps) => JSX.Element;
-
-  constructor(props: IFormProps) {
+  constructor(props: FormTypes) {
     super(props);
-    this.initApp();
+    this.unmount = false;
+    this.promises = [];
+    this.promiseClears = [];
+    this.promiseLayouts = [];
+    this.id = props.name || createID(60);
+    this.garenateInitForm();
+    controlRefresh[this.id] = {
+      unmount: async () => (this.unmount = true),
+      fastRefresh: this.fastRefresh,
+    };
   }
 
-  initApp = async () => {
-    const {
-      initialValues = {},
-      validateFirst,
-      colon,
-      formItemLayout,
-      dotRequired = 'after',
-      form,
-    } = this.props;
-    handle.onChange = this.onChange;
-    handle.onBlurInput = this.onBlurInput;
-    handle.onParseField = this.onParseField;
-    handle.colon = colon;
-    handle.formItemLayout = formItemLayout;
-    handle.dotRequired = dotRequired;
-    handleForm.setFieldsValue = this.setFieldsValue;
-    handleForm.setFieldValue = this.setFieldValue;
-    handleForm.getFieldValue = this.getFieldValue;
-    handleForm.getFieldsValue = this.getFieldsValue;
-    handleForm.validateFields = this.validateFields;
-    handleForm.setFieldError = this.setFieldError;
-    handleForm.resetFields = this.resetFields;
-    handleForm.getTouched = this.getTouched;
-    if (form?.uid) {
-      formControl[form?.uid] = {
-        ref: {},
-        value: {},
-        touched: {},
-        layout: {},
-      };
-    }
-    let uid = form?.uid || uuid;
-    formControl[uid].validateFirst = validateFirst;
-    initialValuesHandle[uid] = initialValues;
-    Object.keys(initialValues).map(
-      async key => (formControl[uid].value[key] = initialValues[key]),
-    );
-  };
-
-  UNSAFE_componentWillReceiveProps(nProps: IFormProps) {
-    const {colon, dotRequired = 'after', formItemLayout} = this.props;
-    if (dotRequired !== nProps.dotRequired) {
-      handle.dotRequired = nProps.dotRequired;
-    }
-    if (colon !== nProps.colon) {
-      handle.colon = nProps.colon;
-    }
-    if (formItemLayout !== nProps.formItemLayout) {
-      handle.formItemLayout = nProps.formItemLayout;
+  garenateInitForm() {
+    const {form} = this.props;
+    if (form) {
+      for (const method of methods) {
+        form[method] = this[method] as any;
+      }
+    } else if (!this.context) {
+      if (formHandle[this.id]) {
+        throw new Error('Form props duplicate name');
+      }
+      formHandle[this.id] = {} as any;
+      for (const method of methods) {
+        (formHandle[this.id] as any)[method] = this[method];
+      }
     }
   }
 
   componentWillUnmount() {
-    const {form} = this.props;
-    if (form?.uid) {
-      delete formControl[form.uid];
-      delete initialValuesHandle[form.uid];
-    }
+    delete formHandle[this.id];
+    delete controlRefresh[this.id];
   }
 
-  onChange = (
-    v: any,
-    name: string,
-    error?: string,
-    uid: string = uuid,
-    isReset?: boolean,
-  ) => {
-    if (!formControl[uid]) {
-      uid = uuid;
+  fastRefresh = async () => {
+    const {initialValues = {}, form} = this.props;
+    const {forceUpdate} = this.state;
+    if (form) {
+      const promise = methods.map(async method => {
+        form[method] = this[method] as any;
+      });
+      Promise.all(promise);
     }
-    formControl[uid].value[name] = v;
-    if (typeof formControl[uid].ref[name] === 'function') {
-      formControl[uid].ref[name](v, error, false, isReset);
+    if (this.unmount) {
+      if (Object.keys(initialValues).length) {
+        this.setFieldsValue(initialValues, true);
+        this.unmount = false;
+      } else {
+        this.setState({forceUpdate: !forceUpdate});
+      }
     }
   };
 
-  onBlurInput = (name: string, v: any, uid: string = uuid) => {
-    if (!formControl[uid]) {
-      uid = uuid;
+  getFieldError = async (name: string) => {
+    const {errors, fields} = this.state;
+    if (!fields[name]) {
+      console.warn(`Field ${name} not existed in Form`);
     }
-    formControl[uid].ref[name]?.(v, undefined, true);
+    return errors?.[name];
   };
 
-  onParseField = (name: string, value?: any, uid: string = uuid) => {
-    if (!formControl[uid]) {
-      uid = uuid;
+  getFieldsError = async (names?: string[]) => {
+    const {errors, fields: fds} = this.state;
+    let errs: {[key: string]: string | undefined} = {};
+    const fields = names || Object.keys(fds || {});
+    if (!Array.isArray(fields)) {
+      return Promise.reject(
+        'method getFieldsError allow params the names must be an array and of type string[]',
+      );
     }
-    if (
-      value !== undefined ||
-      initialValuesHandle?.[uid]?.[name] !== undefined
-    ) {
-      formControl[uid].value[name] =
-        value || initialValuesHandle?.[uid]?.[name];
+    const promise = fields.map(async field => {
+      if (!fds[field]) {
+        console.warn(`Field ${field} not existed in Form`);
+      }
+      if (!field.includes('.')) {
+        errs[field] = errors?.[field];
+      } else {
+        let errorParser: any = errs;
+        field.split('.').map((k, i, arrs) => {
+          errorParser = errorParser[k] =
+            i === arrs.length - 1 ? errors?.[field] : errorParser[k] || {};
+        });
+      }
+    });
+    await Promise.all(promise);
+    return errs;
+  };
+
+  getFieldsValue = async (names?: string[], filter?: FilterGetValues) => {
+    const {touched, validating, values, fields: fds} = this.state;
+    let fields = names || Object.keys(fds || {});
+    if (!Array.isArray(fields)) {
+      return Promise.reject(
+        'method getFieldsValue allow params the names must be an array and of type string[]',
+      );
+    }
+    if (typeof filter === 'function') {
+      fields = fields.filter(field =>
+        filter({touched: touched[field], validating: validating[field]}),
+      );
+    }
+    const value: {[key: string]: string | undefined} = {};
+    const promise = fields.map(async field => {
+      if (!field.includes('.')) {
+        value[field] = values?.[field];
+      } else {
+        let valueParser: any = value;
+        field.split('.').map((k, i, arrs) => {
+          valueParser = valueParser[k] =
+            i === arrs.length - 1 ? values?.[field] : valueParser[k] || {};
+        });
+      }
+    });
+    await Promise.all(promise);
+    return value;
+  };
+
+  getFieldValue = async (name: string) => {
+    const {values, fields} = this.state;
+    if (!fields[name]) {
+      console.warn(`Field ${name} not existed in Form`);
+    }
+    return values?.[name];
+  };
+
+  isFieldsTouched = async (names?: string[], allTouched?: boolean) => {
+    const {touched, fields: fds} = this.state;
+    const fields = names || Object.keys(fds || {});
+    if (!Array.isArray(fields)) {
+      return Promise.reject(
+        'method isFieldsTouched allow params the names must be an array and of type string[]',
+      );
+    }
+    if (allTouched) {
+      return fields.every(field => touched?.[field]);
+    }
+    return fields.some(field => touched?.[field]);
+  };
+
+  isFieldTouched = async (name: string) => {
+    const {touched, fields} = this.state;
+    if (!fields[name]) {
+      console.warn(`Field ${name} not existed in Form`);
+    }
+    return !!touched?.[name];
+  };
+
+  isFieldValidating = async (name: string) => {
+    const {validating, fields} = this.state;
+    if (!fields[name]) {
+      console.warn(`Field ${name} not existed in Form`);
+    }
+    return !!validating?.[name];
+  };
+
+  resetFields = async (names?: string[]) => {
+    const {
+      initialValues,
+      touched,
+      errors,
+      validating,
+      fields: fds,
+    } = this.state;
+    const fields = names || Object.keys(fds || {});
+    const newValues: {[key: string]: any} = {};
+    const promise = fields.map(async field => {
+      if (fds[field]) {
+        newValues[field] = initialValues?.[field];
+        delete touched[field];
+        delete errors[field];
+        delete validating[field];
+      } else {
+        console.warn(`Field ${field} not existed in Form`);
+      }
+    });
+    await Promise.all(promise);
+    this.setState({values: newValues, errors, touched, validating});
+  };
+
+  setFields = async (fields: FieldData[]) => {
+    if (!Array.isArray(fields)) {
+      return Promise.reject(
+        'method setFields allow params the fields must be an array and of type string[]',
+      );
+    }
+    const {
+      values,
+      errors,
+      touched: t,
+      validating: v,
+      fields: fState,
+    } = this.state;
+    const newValues: {[key: string]: any} = {};
+    const errs: {[key: string]: string | undefined} = {};
+    const validating: {[key: string]: boolean} = {};
+    const touched: {[key: string]: boolean} = {};
+    const promise = fields.map(async field => {
+      if (fState[field.name]) {
+        newValues[field.name] = field.value;
+        errors[field.name] = field.error;
+        validating[field.name] =
+          field.validating === undefined ? v?.[field.name] : field.validating;
+        touched[field.name] =
+          field.touched === undefined ? t?.[field.name] : field.touched;
+      } else {
+        console.warn(`Field ${field.name} not existed in Form`);
+      }
+    });
+    await Promise.all(promise);
+    this.setState({
+      values: {...values, ...newValues},
+      errors: {...errors, ...errs},
+      touched: {...t, ...touched},
+      validating: {...v, ...validating},
+    });
+  };
+
+  setFieldValue = async (name: string, value: string) => {
+    const {fields, values, errors: errs} = this.state;
+    const {validateMessages} = this.props;
+    if (fields[name]) {
+      const errors = await validate(
+        value,
+        fields[name],
+        TriggerAction.all,
+        validateMessages,
+      );
+      this.setState({
+        values: {...values, [name]: value},
+        errors: {...errs, [name]: errors?.[0]},
+      });
     } else {
-      formControl[uid].value[name] = initialValuesHandle?.[uid]?.[name];
+      console.warn(`Field ${name} not existed in Form`);
     }
   };
 
   setFieldsValue = async (
-    values: any,
-    errorsValue: any = {},
-    uid: string = uuid,
+    values: {[key: string]: any},
+    forceUpdate?: boolean,
   ) => {
-    if (!formControl[uid]) {
-      uid = uuid;
+    const {fields, values: vS, errors: errs, forceUpdate: force} = this.state;
+    const {validateMessages} = this.props;
+    let errors: {[key: string]: string | undefined} = {};
+    const promises = Object.keys(values).map(async key => {
+      if (fields[key]) {
+        return validate(
+          values[key],
+          fields[key],
+          TriggerAction.all,
+          validateMessages,
+        ).then(errrs => {
+          errors[key] = errrs?.[0];
+        });
+      } else {
+        console.warn(`Field ${key} not existed in Form`);
+      }
+    });
+    await Promise.all(promises);
+    this.setState({
+      values: {...vS, ...values},
+      errors: {...errs, ...errors},
+      forceUpdate: forceUpdate ? !force : force,
+    });
+  };
+
+  validateFields = async (names?: string[]): Promise<ValueValidateField> => {
+    const {fields: fds, values, errors: errs, layouts} = this.state;
+    const {validateMessages, scrollToError} = this.props;
+    let fields = names || Object.keys(fds || {});
+    if (!Array.isArray(fields)) {
+      return Promise.reject(
+        'method validateFields allow params the names must be an array and of type string[]',
+      );
     }
-    const promise = Object.keys(values).map(async key => {
-      if (typeof formControl[uid].ref[key] === 'function') {
-        formControl[uid].value[key] = values[key];
-        return this.onChange(values[key], key, errorsValue[key], uid);
+    const newErrors = {...errs};
+    const promises = fields.map(field => {
+      if (fds[field]) {
+        return undefined;
+      }
+      return validate(
+        values[field],
+        fds[field],
+        TriggerAction.all,
+        validateMessages,
+      ).then(errors => {
+        if (!errors?.length) {
+          return undefined;
+        }
+        if (!newErrors[field]) {
+          newErrors[field] = errors?.[0];
+        }
+        return {
+          [field]: {
+            errors: errors?.filter(Boolean),
+            layout: layouts[field],
+          },
+        };
+      });
+    });
+    const errors: any = (await Promise.all(promises)).filter(Boolean);
+    if (scrollToError && errors?.[0]) {
+      const errorFirst = errors?.[0]?.[Object.keys(errors[0] || {})?.[0]];
+      if (errorFirst && errorFirst?.layout?.y !== undefined) {
+        scrollToError(errorFirst?.layout?.y);
+      }
+    }
+    this.setState({errors: newErrors});
+    const baseValues: {[key: string]: any} = {};
+    const promise = Object.keys(values).map(async valueKey => {
+      if (!valueKey.includes('.')) {
+        baseValues[valueKey] = values?.[valueKey];
+      } else {
+        let valueParser: any = baseValues;
+        valueKey.split('.').map((k, i, arrs) => {
+          valueParser = valueParser[k] =
+            i === arrs.length - 1 ? values?.[valueKey] : valueParser[k] || {};
+        });
       }
     });
     await Promise.all(promise);
+    return {values: baseValues, errors: errors.length ? errors : undefined};
   };
 
-  setFieldValue(key: string, value: any, error: any, uid: string = uuid) {
-    if (!uid || !formControl[uid]) {
-      uid = uuid;
+  onChangeValue = ({name, value, error, validating}: ParamsOnChangeValue) => {
+    const {values, touched, validating: vState, errors} = this.state;
+    const {onValuesChange} = this.props;
+    const validateNew = isNaN(Number(validating)) ? vState?.[name] : validating;
+    this.setState({
+      values: {...values, [name]: value},
+      errors: {...errors, [name]: error},
+      validating: {...vState, [name]: !!validateNew},
+      touched: {...touched, [name]: true},
+    });
+    onValuesChange?.({...values, [name]: value});
+  };
+
+  blurValidate = async (field: string) => {
+    const {values, fields, errors: errs} = this.state;
+    const {validateMessages} = this.props;
+    const errors = await validate(
+      values[field],
+      fields[field],
+      TriggerAction.onBlur,
+      validateMessages,
+    );
+    if (errors?.[0]) {
+      this.setState({errors: {...errs, [field]: errors?.[0]}});
     }
-    formControl[uid].value[key] = value;
-    if (typeof formControl[uid].ref[key] === 'function') {
-      formControl[uid].ref[key](value, error);
+  };
+
+  renderProvider = () => {
+    const {form, initialValues} = this.props;
+    if (form || !this.context) {
+      return {...this.state, initialValues};
     }
+    return this.context;
+  };
+
+  render(): JSX.Element {
+    const {children, ...props} = this.props;
+    return (
+      <FormValues.Provider value={this.renderProvider()}>
+        <FormProps.Provider value={props}>
+          <FreezeChild reload={children}>
+            <FormControlProvider.Consumer>
+              {control => {
+                let pro = control;
+                if (props.form || !pro) {
+                  pro = {
+                    setField: this.setField,
+                    clearField: this.clearField,
+                    validateField: this.validateFieldFirst,
+                    onChangeValue: this.onChangeValue,
+                    setLayout: this.setLayout,
+                    renameLayout: this.renameLayout,
+                    blurValidate: this.blurValidate,
+                  };
+                }
+                return (
+                  <FormControlProvider.Provider value={pro}>
+                    {children}
+                  </FormControlProvider.Provider>
+                );
+              }}
+            </FormControlProvider.Consumer>
+          </FreezeChild>
+        </FormProps.Provider>
+      </FormValues.Provider>
+    );
   }
+}
 
-  getFieldValue = (key: string, uid: string = uuid) => {
-    if (!formControl[uid]) {
-      uid = uuid;
-    }
-    return formControl[uid].value[key];
-  };
-
-  getFieldsValue = (uid: string = uuid) => {
-    if (!formControl[uid]) {
-      uid = uuid;
-    }
-    return formControl[uid].value;
-  };
-
-  validateFields = async (
-    calback?: (err?: IErrorForm[], v?: IValueForm) => any,
-    custom?: {fields?: string[]; excepts?: string[]},
-    uid: string = uuid,
-  ) => {
-    if (!formControl[uid]) {
-      uid = uuid;
-    }
-    const {fields = Object.keys(formControl[uid].value), excepts} =
-      custom || {};
-
-    const promise = fields.map(async key => {
-      if (typeof formControl[uid].ref[key] === 'function') {
-        return formControl[uid].ref[key](
-          formControl[uid].value[key],
-          undefined,
-          true,
-        );
+const buildForm = (): FormInstance => {
+  let form: any = {};
+  methods.map(method => {
+    form[method] = async (...args: any[]) => {
+      const keys = Object.keys(formHandle);
+      if (keys.length === 1) {
+        return await (formHandle[keys[0]]?.[method] as any)?.(...args);
       }
-    });
-    await Promise.all(promise);
-    let arrayKeys = Object.keys(errors);
-    if (excepts && excepts.length) {
-      arrayKeys = arrayKeys.filter((key: string) => !excepts.includes(key));
-    }
-    let errorArr: {[key: string]: any}[] | undefined = arrayKeys.map(
-      (key: string) => ({
-        [key]: errors[key],
-        layout: formControl[uid].layout[key],
-      }),
-    );
-    if (!errorArr.length) {
-      errorArr = undefined;
-    }
-    if (typeof calback === 'function') {
-      calback(errorArr, formControl[uid].value);
-    }
-    const {onScrollError} = this.props;
-    if (onScrollError && errorArr?.[0]) {
-      const {layout} = errorArr[0];
-      onScrollError(layout.y);
-    }
-    return {errors: errorArr, values: formControl[uid].value};
-  };
+      const values: any = {};
+      const promise = keys.map(async key => {
+        const data = await (formHandle[key]?.[method] as any)?.(...args);
+        values[key] = data;
+      });
+      await Promise.all(promise);
+      return values;
+    };
+  });
+  return form;
+};
 
-  setFieldError = (field: string, error?: string, uid: string = uuid) => {
-    if (!uid || !formControl[uid]) {
-      uid = uuid;
-    }
-    if (typeof formControl[uid].ref[field] === 'function') {
-      formControl[uid].ref[field](formControl[uid].value[field], error);
-    }
-  };
+Form.create = function create<T>(Com: React.ComponentType<T>) {
+  const form: FormInstance = buildForm();
+  return React.forwardRef((props: T, ref) => (
+    <Com {...props} ref={ref} form={form} />
+  ));
+};
 
-  resetFields = async (
-    fields: any[],
-    errorsValue: any = {},
-    uid: string = uuid,
-  ) => {
-    if (!uid || !formControl[uid]) {
-      uid = uuid;
-    }
-    const promise = (fields || Object.keys(formControl[uid].value)).map(
-      async key => {
-        return this.onChange(
-          initialValuesHandle?.[uid]?.[key],
-          key,
-          errorsValue[key],
-          uid,
-          true,
-        );
-      },
-    );
-    await Promise.all(promise);
-  };
+const useForm = (): FormInstance => {
+  return buildForm();
+};
 
-  getTouched = (field?: string, uid: string = uuid) => {
-    if (!uid || !formControl[uid]) {
-      uid = uuid;
-    }
-    if (!field) {
-      return formControl[uid].touched;
-    }
-    return formControl[uid].touched?.[field];
-  };
+Form.useForm = useForm;
 
-  renderChild = (child: any) => {
-    const {form, hiddenRequired} = this.props;
-    return {...child, props: {form, hiddenRequired, ...child.props}};
+Form.unMount = async () => {
+  const promise = Object.keys(controlRefresh).map(async key => {
+    controlRefresh[key]?.unmount();
+  });
+  Promise.all(promise);
+};
+
+Form.fastRefresh = async () => {
+  const promise = Object.keys(controlRefresh).map(async key => {
+    controlRefresh[key]?.fastRefresh();
+  });
+  Promise.all(promise);
+};
+
+Form.Item = Item;
+
+class ScrollView extends Component<
+  FormTypes & {scrollViewProps?: ScrollViewProps}
+> {
+  scrollView?: ScrollViewLibrary | null;
+
+  scrollTo = (y: number) => {
+    this.scrollView?.scrollTo?.({animated: true, y});
   };
 
   render() {
-    const {style, children} = this.props;
-    if (!children) {
-      return null;
-    }
+    const {children, scrollViewProps, ...props} = this.props;
     return (
-      <View style={style}>
-        {Array.isArray(children)
-          ? children.map((child: any) => this.renderChild(child))
-          : this.renderChild(children)}
-      </View>
+      <ScrollViewLibrary
+        {...scrollViewProps}
+        ref={ref => (this.scrollView = ref)}>
+        <Form {...props} scrollToError={this.scrollTo}>
+          {children}
+        </Form>
+      </ScrollViewLibrary>
     );
   }
 }
 
-function createUid(): string {
-  const uid = random(26);
-  if (formControl[uid]) {
-    return createUid();
-  }
-  return uid;
-}
-
-Form.useForm = (): IFormHandle & {uid: string} => {
-  const uid = useRef(createUid()).current;
-  return {
-    setFieldsValue: (value: any, errs?: any) => {
-      return handleForm.setFieldsValue(value, errs, uid);
-    },
-    setFieldValue: (
-      key: string,
-      value?: any,
-      error?: ReactChild | undefined,
-    ) => {
-      return handleForm.setFieldValue(key, value, error, uid);
-    },
-    getFieldValue: (field: string) => {
-      return handleForm.getFieldValue(field, uid);
-    },
-    getFieldsValue: () => {
-      return handleForm.getFieldsValue(uid);
-    },
-    validateFields: (
-      calback?: (err?: IErrorForm, values?: IValueForm) => any,
-      data?: {fields?: string[]; excepts?: string[]},
-    ) => {
-      return handleForm.validateFields(calback, data, uid);
-    },
-    setFieldError: (field: string, error?: any) => {
-      return handleForm.setFieldError(field, error, uid);
-    },
-    resetFields: (fields?: any, errs?: any) => {
-      return handleForm.resetFields(fields, errs, uid);
-    },
-    getTouched: (field?: string) => {
-      return handleForm.getTouched(field, uid);
-    },
-    uid,
-  };
-};
-
-const ItemForm = (props: IItemProps) => {
-  const newProps: any = props;
-  const {form, name: nameProps} = newProps;
-  const uid = form?.uid || uuid;
-  const formControlItem: any = formControl[uid];
-
-  useEffect(() => {
-    return () => {
-      delete errors?.[nameProps];
-      delete form?.ref?.[nameProps];
-      delete form?.value?.[nameProps];
-      delete form?.touched?.[nameProps];
-      if (uid !== uuid) {
-        delete initialValuesHandle?.[uid]?.[nameProps];
-        delete formControl[uid]?.value?.[nameProps];
-      }
-    };
-  }, [form?.ref, form?.touched, form?.value, nameProps, uid]);
-
-  return (
-    <Item
-      {...props}
-      errors={errors}
-      form={formControlItem}
-      onChangeText={(v: any) => {
-        return handle.onChange(v, nameProps, undefined, uid);
-      }}
-      onChangeValue={(v: any) => {
-        return handle.onChange(v, nameProps, undefined, uid);
-      }}
-      onChangeInput={props.onChange}
-      onParseField={(v: any, callback: any) => {
-        return handle.onParseField(v, callback, uid);
-      }}
-      value={formControlItem?.value?.[props.name] || props.defaultValue}
-      colon={handle.colon}
-      dotRequired={handle.dotRequired}
-      formItemLayout={handle.formItemLayout}
-      onBlurInput={(v: any) => {
-        handle.onBlurInput(nameProps, v, uid);
-      }}
-    />
-  );
-};
-
-Form.Item = ItemForm;
-
-const ScrollView = (props: ScrollViewProps & IFormProps) => {
-  const {
-    initialValues,
-    validateFirst,
-    style,
-    colon,
-    formItemLayout,
-    dotRequired,
-    form,
-    hiddenRequired,
-    children,
-    ...p
-  } = props;
-  const propsForm = {
-    initialValues,
-    validateFirst,
-    style,
-    colon,
-    formItemLayout,
-    dotRequired,
-    form,
-    hiddenRequired,
-  };
-
-  const refScroll = useRef<ScrollViewLibrary | null>(null);
-
-  const onScrollError = useCallback(y => {
-    refScroll.current?.scrollTo({y, animated: true});
-  }, []);
-
-  return (
-    <ScrollViewLibrary ref={refScroll} {...p}>
-      <Form {...propsForm} onScrollError={onScrollError}>
-        {children}
-      </Form>
-    </ScrollViewLibrary>
-  );
-};
-
 Form.ScrollView = ScrollView;
-
-Form.create = () => {
-  return (WrapComponent: React.ComponentType<any>) =>
-    React.forwardRef((p, ref) => {
-      return <WrapComponent {...p} form={handleForm} ref={ref} />;
-    });
-};
 
 export default Form;

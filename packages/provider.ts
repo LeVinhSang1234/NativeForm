@@ -1,14 +1,37 @@
 import {createContext, useContext} from 'react';
-import {ValueProviderState} from './Form/types';
+import {
+  defaultValidateMessages,
+  Form,
+  FormControl,
+  TriggerAction,
+  ValueForm,
+} from './Form/types';
 
-const defaultValueProvider: ValueProviderState = {
-  hiddenRequired: false,
+//-----------------//
+
+let defaultValues:
+  | (ValueForm & {forceUpdate: boolean; initialValues?: {[key: string]: any}})
+  | undefined;
+export const FormValues = createContext(defaultValues as any);
+
+//-----------------//
+
+const defaultValueProvider: Form = {
+  colon: true,
+  labelAlign: 'left',
+  requiredMark: true,
+  validateMessages: defaultValidateMessages,
+  validateTrigger: TriggerAction.onChange,
 };
 
-const FormContext = createContext(defaultValueProvider);
+export const FormProps = createContext(defaultValueProvider);
 
-export const useFormProvider = () => {
-  return useContext(FormContext);
+export const useFormProps = () => {
+  return useContext(FormProps);
 };
 
-export default FormContext;
+//-----------------//
+
+let defaultFormControl: FormControl | undefined;
+
+export const FormControlProvider = createContext(defaultFormControl);

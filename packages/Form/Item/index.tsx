@@ -1,6 +1,6 @@
 import {FormControlProvider, FormProps, FormValues} from '@/provider';
 import Text from '@/Text';
-import {color} from '@/utils';
+import {color, FreezeChild} from '@/utils';
 import React, {Component} from 'react';
 import {LayoutChangeEvent, StyleSheet, View} from 'react-native';
 import {
@@ -65,9 +65,15 @@ class Item extends Component<FormItem> {
     });
   };
 
-  onChangeValue = async (value: any) => {
+  onChangeValue = async (value: any, trigger?: 'onChange' | 'onBlur') => {
     const {onChangeValue} = this.context as FormControl;
-    const {rules, name, label, required, validateTrigger} = this.props;
+    const {
+      rules,
+      name,
+      label,
+      required,
+      validateTrigger = trigger,
+    } = this.props;
     const errors = await validate(
       this.renderValue(value),
       {rules, name, label, required, validateTrigger},
@@ -166,44 +172,50 @@ class Item extends Component<FormItem> {
             );
           }}
         </FormProps.Consumer>
-        <FormValues.Consumer>
-          {({
-            values,
-            errors,
-            touched,
-            validating,
-            forceUpdate,
-            initialValues,
-            fields,
-          }) => {
-            return (
-              <ItemChild
-                onBlur={this.onBlur}
-                validateFirst={props.validateFirst}
-                name={name}
-                label={label}
-                rules={this.garenateRules(fields?.[name]?.rules)}
-                required={required}
-                validateTrigger={props.validateTrigger}
-                getValueProps={props.getValueProps}
-                valuePropName={props.valuePropName}
-                value={values?.[name]}
-                initialValue={
-                  initialValues?.[name] === undefined
-                    ? initialValue
-                    : initialValues?.[name]
-                }
-                forceUpdate={forceUpdate}
-                error={errors?.[name]}
-                touched={!!touched?.[name]}
-                validating={!!validating?.[name]}
-                onChangeValue={this.onChangeValue}
-                initItem={this.initItem}>
-                {children}
-              </ItemChild>
-            );
-          }}
-        </FormValues.Consumer>
+        <FormProps.Consumer>
+          {({validateTrigger: trigger}) => (
+            <FreezeChild reload={trigger}>
+              <FormValues.Consumer>
+                {({
+                  values,
+                  errors,
+                  touched,
+                  validating,
+                  forceUpdate,
+                  initialValues,
+                  fields,
+                }) => {
+                  return (
+                    <ItemChild
+                      onBlur={this.onBlur}
+                      validateFirst={props.validateFirst}
+                      name={name}
+                      label={label}
+                      rules={this.garenateRules(fields?.[name]?.rules)}
+                      required={required}
+                      validateTrigger={props.validateTrigger}
+                      getValueProps={props.getValueProps}
+                      valuePropName={props.valuePropName}
+                      value={values?.[name]}
+                      initialValue={
+                        initialValues?.[name] === undefined
+                          ? initialValue
+                          : initialValues?.[name]
+                      }
+                      forceUpdate={forceUpdate}
+                      error={errors?.[name]}
+                      touched={!!touched?.[name]}
+                      validating={!!validating?.[name]}
+                      onChangeValue={v => this.onChangeValue(v, trigger as any)}
+                      initItem={this.initItem}>
+                      {children}
+                    </ItemChild>
+                  );
+                }}
+              </FormValues.Consumer>
+            </FreezeChild>
+          )}
+        </FormProps.Consumer>
       </View>
     );
   }

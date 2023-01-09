@@ -1,5 +1,3 @@
-<h1 style="color: #ff4d4f">Note: from ver 2.0.0 and above, the structure and props passed in have changed.<h1>
-
 <a href="#example">Click here to Example</a>
 
 # API

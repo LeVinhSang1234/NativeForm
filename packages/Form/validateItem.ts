@@ -18,6 +18,7 @@ export const validate = async (
   }
   if (
     !rules?.length &&
+    required &&
     !value &&
     (trigger === validateTrigger || trigger === TriggerAction.all)
   ) {

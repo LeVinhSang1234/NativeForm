@@ -330,7 +330,7 @@ class Form extends GarenateInitValue {
     }
     const newErrors = {...errs};
     const promises = fields.map(field => {
-      if (fds[field]) {
+      if (!fds[field]) {
         return undefined;
       }
       return validate(

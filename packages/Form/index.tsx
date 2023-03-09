@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {createID, FreezeChild} from '@/utils';
+import {createID, FreezeChild} from '../utils';
 import {
   Create,
   Form as FormTypes,

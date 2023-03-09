@@ -1,6 +1,5 @@
-import {FormControlProvider, FormProps, FormValues} from '@/provider';
-import Text from '@/Text';
-import {color, FreezeChild} from '@/utils';
+import {FormControlProvider, FormProps, FormValues} from '../../provider';
+import {color, FreezeChild} from '../../utils';
 import React, {Component} from 'react';
 import {LayoutChangeEvent, StyleSheet, View} from 'react-native';
 import {
@@ -12,6 +11,7 @@ import {
 } from '../types';
 import {validate} from '../validateItem';
 import ItemChild from './components/ItemChild';
+import Text from '../../Text';
 
 interface PropsItem extends FormItemDefault {
   validateFirst?: boolean;

@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
-import Text from '@/Text';
-import {color} from '@/utils';
+import {color} from '../../../utils';
 import {Animated, StyleSheet, TextStyle, View} from 'react-native';
+import Text from '../../../Text';
 
 const TextAnimated = Animated.createAnimatedComponent(Text);
 

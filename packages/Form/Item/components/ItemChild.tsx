@@ -1,4 +1,4 @@
-import {FormItemDefault} from '@/Form/types';
+import {FormItemDefault} from '../../../Form/types';
 import React, {cloneElement, Component, Fragment} from 'react';
 import TextError from './TextError';
 

@@ -15,9 +15,6 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "outDir": "lib",
-    "paths": {
-      "@/*": ["./packages/*"]
-    }
   },
   "exclude": [
     "node_modules",

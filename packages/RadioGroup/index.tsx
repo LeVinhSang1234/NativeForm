@@ -6,6 +6,7 @@ export declare type IRadioGroup = {
   onChangeValue?: (v: any) => any;
   horizontal?: boolean;
   error?: any;
+  children?: any;
 };
 
 class RadioGroup extends Component<IRadioGroup> {

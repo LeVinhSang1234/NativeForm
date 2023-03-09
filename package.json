@@ -1,10 +1,10 @@
 {
   "name": "@rn-form/form",
-  "version": "2.0.1",
+  "version": "2.0.3",
   "license": "UNLICENSED",
   "description": "react native form",
   "main": "lib/commonjs/index.js",
-  "types": "lib/typescript/index.d.ts",
+  "types": "lib/typescript/packages/index.d.ts",
   "author": "SangLv <lsang2884@gmail.com>",
   "homepage": "https://github.com/LeVinhSang1234/NativeForm.git",
   "scripts": {
@@ -55,7 +55,6 @@
     ]
   },
   "files": [
-    "packages",
     "lib",
     "!**/__tests__",
     "!**/__fixtures__",

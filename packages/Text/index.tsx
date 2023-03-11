@@ -1,10 +1,5 @@
 import React, {Component} from 'react';
-import {
-  Platform,
-  PlatformColor,
-  Text as TextLibrary,
-  TextProps,
-} from 'react-native';
+import {Text as TextLibrary, TextProps, useColorScheme} from 'react-native';
 
 const TextFunc = React.forwardRef(
   (
@@ -12,17 +7,10 @@ const TextFunc = React.forwardRef(
     ref: any,
   ) => {
     const {children, style} = props;
+    const scheme = useColorScheme();
+    const color = scheme === 'dark' ? '#ffffff' : '#000000';
     return (
-      <TextLibrary
-        ref={ref}
-        style={[
-          {
-            color: PlatformColor(
-              Platform.OS === 'ios' ? 'label' : '?android:attr/textColor',
-            ),
-          },
-          style,
-        ]}>
+      <TextLibrary ref={ref} style={[{color}, style]}>
         {children}
       </TextLibrary>
     );

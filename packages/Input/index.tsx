@@ -1,9 +1,10 @@
 import React, {Component} from 'react';
 import {
   Animated,
+  Appearance,
+  ColorSchemeName,
+  NativeEventSubscription,
   NativeSyntheticEvent,
-  Platform,
-  PlatformColor,
   Pressable,
   StyleSheet,
   TextInput,
@@ -29,16 +30,21 @@ export declare type ITextInputProps = {
 
 interface IState {
   isFocus: boolean;
+  scheme: ColorSchemeName;
 }
 
 class Input extends Component<ITextInputProps & TextInputProps, IState> {
   animatedInput: Animated.Value;
   TextInput?: TextInput | null;
+  listener: NativeEventSubscription;
   constructor(props: ITextInputProps & TextInputProps) {
     super(props);
     const {error} = props;
     this.animatedInput = new Animated.Value(error ? 2 : 0);
-    this.state = {isFocus: false};
+    this.state = {isFocus: false, scheme: Appearance.getColorScheme()};
+    this.listener = Appearance.addChangeListener(({colorScheme}) => {
+      this.setState({scheme: colorScheme});
+    });
   }
 
   UNSAFE_componentWillReceiveProps(nProps: ITextInputProps & TextInputProps) {
@@ -57,6 +63,10 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
         useNativeDriver: false,
       }).start();
     }
+  }
+
+  componentWillUnmount(): void {
+    this.listener?.remove?.();
   }
 
   onFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
@@ -98,14 +108,13 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
       multiline,
       ...props
     } = this.props;
+    const {scheme} = this.state;
     const borderColor = this.animatedInput.interpolate({
       inputRange: [0, 1, 2],
       outputRange: [borderColorProps, activeBorderColor, rangeBorderColor],
     });
-    const color = Platform.select({
-      default: PlatformColor('label'),
-      android: PlatformColor('?android:attr/textColor'),
-    });
+    const color = scheme === 'dark' ? '#ffffff' : '#000000';
+    const placeholderTextColor = '#e3e3e3';
     const paddingTop = multiline ? 6 : 11;
     return (
       <PressAnimated
@@ -116,10 +125,7 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
         <TextInput
           ref={ref => (this.TextInput = ref)}
           textAlignVertical="center"
-          placeholderTextColor={Platform.select({
-            default: PlatformColor('placeholderText'),
-            android: PlatformColor('?android:attr/placeholderText'),
-          })}
+          placeholderTextColor={placeholderTextColor}
           {...props}
           multiline={multiline}
           style={[{color}, styleInput]}

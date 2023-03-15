@@ -20,8 +20,8 @@ const PressAnimated = Animated.createAnimatedComponent(Pressable);
 export declare type ITextInputProps = {
   error?: string | boolean;
   onChangeValue?: (v: string) => any;
-  style?: ViewStyle;
-  styleInput?: TextStyle;
+  style?: ViewStyle | ViewStyle[];
+  styleInput?: TextStyle | TextStyle[];
   activeBorderColor?: string;
   rangeBorderColor?: string;
   borderColor?: string;
@@ -69,7 +69,15 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
     this.listener?.remove?.();
   }
 
-  onFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  focus = () => {
+    this.TextInput?.focus();
+  };
+
+  blur = () => {
+    this.TextInput?.blur();
+  };
+
+  private onFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
     const {onFocus, error} = this.props;
     if (!error) {
       Animated.timing(this.animatedInput, {
@@ -82,7 +90,7 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
     this.setState({isFocus: true});
   };
 
-  onBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+  private onBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
     const {onBlur, error} = this.props;
     onBlur?.(e);
     if (!error) {

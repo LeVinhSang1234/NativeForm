@@ -69,7 +69,7 @@ class Form extends GarenateInitValue {
     }
   }
 
-  garenateInitForm() {
+  private garenateInitForm() {
     const {form, name} = this.props;
     if (form) {
       for (const method of methods) {
@@ -93,7 +93,7 @@ class Form extends GarenateInitValue {
     const {forceUpdate} = this.state;
     if (form) {
       const promise = methods.map(async method => {
-        form[method] = this[method] as any;
+        form[method] = (this as any)[method] as any;
       });
       Promise.all(promise);
     }

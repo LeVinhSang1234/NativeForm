@@ -29,12 +29,8 @@ class Item extends Component<FormItem> {
   }
 
   UNSAFE_componentWillReceiveProps(nProps: FormItem) {
-    const {name, required, rules} = this.props;
-    if (
-      name !== nProps.name ||
-      required !== nProps.required ||
-      rules !== nProps.rules
-    ) {
+    const {name} = this.props;
+    if (name !== nProps.name) {
       const {clearField, renameLayout} = this.context as FormControl;
       if (renameLayout && name !== nProps.name) {
         renameLayout(name, nProps.name);

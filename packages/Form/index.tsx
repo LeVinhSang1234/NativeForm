@@ -391,7 +391,6 @@ class Form extends GarenateInitValue {
   };
 
   blurValidate = async (field: string) => {
-    console.log('this.state', this.state);
     const {values, fields, errors: errs} = this.state;
     const {validateMessages} = this.props;
     const errors = await validate(

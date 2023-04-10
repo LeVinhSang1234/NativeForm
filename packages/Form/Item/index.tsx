@@ -1,5 +1,5 @@
 import {FormControlProvider, FormProps, FormValues} from '../../provider';
-import {color, FreezeChild} from '../../utils';
+import {color} from '../../utils';
 import React, {Component} from 'react';
 import {LayoutChangeEvent, StyleSheet, View} from 'react-native';
 import {
@@ -170,46 +170,44 @@ class Item extends Component<FormItem> {
         </FormProps.Consumer>
         <FormProps.Consumer>
           {({validateTrigger: trigger}) => (
-            <FreezeChild reload={trigger}>
-              <FormValues.Consumer>
-                {({
-                  values,
-                  errors,
-                  touched,
-                  validating,
-                  forceUpdate,
-                  initialValues,
-                  fields,
-                }) => {
-                  return (
-                    <ItemChild
-                      onBlur={this.onBlur}
-                      validateFirst={props.validateFirst}
-                      name={name}
-                      label={label}
-                      rules={this.garenateRules(fields?.[name]?.rules)}
-                      required={required}
-                      validateTrigger={props.validateTrigger}
-                      getValueProps={props.getValueProps}
-                      valuePropName={props.valuePropName}
-                      value={values?.[name]}
-                      initialValue={
-                        initialValues?.[name] === undefined
-                          ? initialValue
-                          : initialValues?.[name]
-                      }
-                      forceUpdate={forceUpdate}
-                      error={errors?.[name]}
-                      touched={!!touched?.[name]}
-                      validating={!!validating?.[name]}
-                      onChangeValue={v => this.onChangeValue(v, trigger as any)}
-                      initItem={this.initItem}>
-                      {children}
-                    </ItemChild>
-                  );
-                }}
-              </FormValues.Consumer>
-            </FreezeChild>
+            <FormValues.Consumer>
+              {({
+                values,
+                errors,
+                touched,
+                validating,
+                forceUpdate,
+                initialValues,
+                fields,
+              }) => {
+                return (
+                  <ItemChild
+                    onBlur={this.onBlur}
+                    validateFirst={props.validateFirst}
+                    name={name}
+                    label={label}
+                    rules={this.garenateRules(fields?.[name]?.rules)}
+                    required={required}
+                    validateTrigger={props.validateTrigger}
+                    getValueProps={props.getValueProps}
+                    valuePropName={props.valuePropName}
+                    value={values?.[name]}
+                    initialValue={
+                      initialValues?.[name] === undefined
+                        ? initialValue
+                        : initialValues?.[name]
+                    }
+                    forceUpdate={forceUpdate}
+                    error={errors?.[name]}
+                    touched={!!touched?.[name]}
+                    validating={!!validating?.[name]}
+                    onChangeValue={v => this.onChangeValue(v, trigger as any)}
+                    initItem={this.initItem}>
+                    {children}
+                  </ItemChild>
+                );
+              }}
+            </FormValues.Consumer>
           )}
         </FormProps.Consumer>
       </View>

@@ -2,15 +2,6 @@ import {FormItemDefault} from '../../../Form/types';
 import React, {cloneElement, Component, Fragment} from 'react';
 import TextError from './TextError';
 
-const keyProps = [
-  'value',
-  'error',
-  'touched',
-  'validating',
-  'checked',
-  'initialValue',
-];
-
 interface PropsDefault {
   value?: any;
   error?: string;
@@ -41,10 +32,6 @@ class ItemChild extends Component<ItemChildProps & FormItemDefault> {
     if (forceUpdate !== nProps.forceUpdate) {
       initItem(nProps.initialValue, nProps);
     }
-  }
-
-  shouldComponentUpdate(nProps: any) {
-    return keyProps.some(e => (this.props as any)[e] !== nProps[e]);
   }
 
   renderChildren = () => {

@@ -36,7 +36,7 @@ class Item extends Component<FormItem> {
       if (!allowAddItemWhenChangeName && renameLayout) {
         renameLayout(name, nProps.name);
       }
-      if (!preserve) {
+      if (!allowAddItemWhenChangeName && !preserve) {
         clearField(name, nProps.name);
       }
     }

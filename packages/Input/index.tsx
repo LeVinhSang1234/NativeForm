@@ -122,7 +122,6 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
       outputRange: [borderColorProps, activeBorderColor, rangeBorderColor],
     });
     const color = scheme === 'dark' ? '#ffffff' : '#000000';
-    const placeholderTextColor = '#e3e3e3';
     const paddingTop = multiline ? 6 : 11;
     return (
       <PressAnimated
@@ -133,7 +132,6 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
         <TextInput
           ref={ref => (this.TextInput = ref)}
           textAlignVertical="center"
-          placeholderTextColor={placeholderTextColor}
           {...props}
           multiline={multiline}
           style={[{color}, styleInput]}

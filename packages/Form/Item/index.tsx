@@ -30,16 +30,19 @@ class Item extends Component<FormItem> {
 
   UNSAFE_componentWillReceiveProps(nProps: FormItem) {
     const {name} = this.props;
+    const {preserve, allowAddItemWhenChangeName} = nProps;
     if (name !== nProps.name) {
       const {clearField, renameLayout} = this.context as FormControl;
-      if (renameLayout && name !== nProps.name) {
+      if (!allowAddItemWhenChangeName && renameLayout) {
         renameLayout(name, nProps.name);
       }
-      clearField(name, nProps.name);
+      if (!preserve) {
+        clearField(name, nProps.name);
+      }
     }
   }
 
-  initItem = (value: any, props: PropsItem = this.props) => {
+  private initItem = (value: any, props: PropsItem = this.props) => {
     const {
       validateFirst,
       name,
@@ -49,6 +52,7 @@ class Item extends Component<FormItem> {
       validateTrigger,
       getValueProps = v => v,
       valuePropName,
+      preserve,
     } = props;
     const {setField, validateField} = this.context as FormControl;
     let funCall = setField;
@@ -57,11 +61,32 @@ class Item extends Component<FormItem> {
     }
     funCall({
       value: valuePropName === 'checked' ? !!value : getValueProps(value),
-      propsItem: {name, label, rules, required, validateTrigger},
+      propsItem: {name, label, rules, required, validateTrigger, preserve},
     });
   };
 
-  onChangeValue = async (value: any, trigger?: 'onChange' | 'onBlur') => {
+  private addNewInitItem = (value: any, props: PropsItem = this.props) => {
+    const {
+      name,
+      label,
+      rules,
+      required,
+      validateTrigger,
+      getValueProps = v => v,
+      valuePropName,
+      preserve,
+    } = props;
+    const {setField} = this.context as FormControl;
+    setField({
+      value: valuePropName === 'checked' ? !!value : getValueProps(value),
+      propsItem: {name, label, rules, required, validateTrigger, preserve},
+    });
+  };
+
+  private onChangeValue = async (
+    value: any,
+    trigger?: 'onChange' | 'onBlur',
+  ) => {
     const {onChangeValue} = this.context as FormControl;
     const {
       rules,
@@ -83,7 +108,7 @@ class Item extends Component<FormItem> {
     });
   };
 
-  renderValue = (value: any) => {
+  private renderValue = (value: any) => {
     const {getValueProps, valuePropName} = this.props;
     if (getValueProps) {
       return getValueProps(value);
@@ -97,25 +122,25 @@ class Item extends Component<FormItem> {
     return value;
   };
 
-  renderLabelRequired = (mark?: boolean | string) => {
+  private renderLabelRequired = (mark?: boolean | string) => {
     if (mark === undefined || mark === true) {
       return '*';
     }
     return mark;
   };
 
-  getRequire = () => {
+  private getRequire = () => {
     const {required, rules} = this.props;
     return required || rules?.some(rule => rule.required);
   };
 
-  setLayout = (event: LayoutChangeEvent) => {
+  private setLayout = (event: LayoutChangeEvent) => {
     const {name} = this.props;
     const {setLayout} = this.context as FormControl;
     setLayout?.({name: name, layout: event.nativeEvent.layout});
   };
 
-  garenateRules = (rules?: Rule[]) => {
+  private garenateRules = (rules?: Rule[]) => {
     const {rules: rulesProps} = this.props;
     if (rulesProps?.length) {
       return [...(rules || []), ...rulesProps];
@@ -123,7 +148,7 @@ class Item extends Component<FormItem> {
     return rules;
   };
 
-  onBlur = () => {
+  private onBlur = () => {
     const {name} = this.props;
     const {blurValidate} = this.context as FormControl;
     blurValidate?.(name);
@@ -138,6 +163,8 @@ class Item extends Component<FormItem> {
       labelStyle,
       initialValue,
       hidden,
+      keepValueWhenChangeName,
+      allowAddItemWhenChangeName,
       ...props
     } = this.props;
     if (hidden) {
@@ -182,6 +209,8 @@ class Item extends Component<FormItem> {
               }) => {
                 return (
                   <ItemChild
+                    keepValueWhenChangeName={keepValueWhenChangeName}
+                    allowAddItemWhenChangeName={allowAddItemWhenChangeName}
                     onBlur={this.onBlur}
                     validateFirst={props.validateFirst}
                     name={name}
@@ -202,7 +231,8 @@ class Item extends Component<FormItem> {
                     touched={!!touched?.[name]}
                     validating={!!validating?.[name]}
                     onChangeValue={v => this.onChangeValue(v, trigger as any)}
-                    initItem={this.initItem}>
+                    initItem={this.initItem}
+                    addNewInitItem={this.addNewInitItem}>
                     {children}
                   </ItemChild>
                 );

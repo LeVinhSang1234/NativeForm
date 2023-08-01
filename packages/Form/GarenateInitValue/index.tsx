@@ -80,13 +80,17 @@ class GarenateInitValue extends Component<
     this.promiseLayouts.push(Promise.resolve({old: name, new: name2}));
     this.timeoutLayout = setTimeout(async () => {
       const layouts = await Promise.all(this.promiseLayouts);
-      const {layouts: layoutsState} = this.state;
+      const {layouts: layoutsState, fields} = this.state;
       const newLayoutClone: {[key: string]: LayoutRectangle} = {
         ...layoutsState,
       };
       for (const lay of layouts) {
         newLayoutClone[lay.new] = newLayoutClone[lay.old];
-        delete newLayoutClone[lay.old];
+        if (!fields[lay.old]?.preserve) {
+          if (fields[lay.old]?.total <= 1) {
+            delete newLayoutClone[lay.old];
+          }
+        }
       }
       this.setState({layouts: newLayoutClone});
     }, 100);
@@ -122,7 +126,7 @@ class GarenateInitValue extends Component<
   };
 
   promiseInitValueFirst = async () => {
-    const {errors, fields, validating} = this.state;
+    const {errors, fields, validating, values} = this.state;
     this.timeout = setTimeout(async () => {
       this.timeout = undefined;
       const validates: ValuePassing[] = await Promise.all(this.promises);
@@ -130,7 +134,7 @@ class GarenateInitValue extends Component<
         return;
       }
       this.promises = [];
-      const newValues: {[key: string]: any} = {};
+      const newValues: {[key: string]: any} = {...values};
       const newErrors = {...errors};
       const newValidating = {...validating};
       let fds = {...fields};
@@ -181,13 +185,13 @@ class GarenateInitValue extends Component<
       validating[nameNew] = validating[name];
       fds[nameNew] = {...fds[name], name: nameNew};
     }
-    delete values[name];
-    delete errors[name];
-    delete touched[name];
-    delete validating[name];
     if (fields[name]?.total > 1) {
       fields[name].total -= 1;
     } else {
+      delete values[name];
+      delete errors[name];
+      delete touched[name];
+      delete validating[name];
       delete fds[name];
     }
     this.setState({fields: fds, values, errors, touched, validating});

@@ -1,14 +1,11 @@
-import React, {useEffect} from 'react';
+import React, {useState} from 'react';
 import {Button, SafeAreaView, StyleSheet} from 'react-native';
 import Form, {Input, Radio, RadioGroup} from './packages';
 
 const App = () => {
   const form = Form.useForm();
 
-  useEffect(() => {
-    Form.fastRefresh();
-    return Form.unMount;
-  });
+  const [name, setName] = useState('login');
 
   return (
     <SafeAreaView style={styles.view}>
@@ -25,7 +22,11 @@ const App = () => {
             valuePropName="number">
             <Input placeholder="2" />
           </Form.Item>
-          <Form.Item name="login" label="Login1" rules={[{whitespace: true}]}>
+          <Form.Item
+            preserve
+            name={name}
+            label={name}
+            rules={[{whitespace: true}]}>
             <Input placeholder="2" />
           </Form.Item>
           <Form.Item name="login2.d" label="Login2" required validateFirst>
@@ -42,7 +43,13 @@ const App = () => {
       </Form>
 
       <Button
-        title="hahaha"
+        title="Rename Field"
+        onPress={async () => {
+          setName('logon1');
+        }}
+      />
+      <Button
+        title="Validate Form 2"
         onPress={async () => {
           const data = await form.validateFields();
           console.log('data =====>', data);
@@ -118,4 +125,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Form.create(App);
+export default App;

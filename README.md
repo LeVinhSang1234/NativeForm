@@ -19,6 +19,7 @@ type Form = {
   validateTrigger?: 'onChange' | 'onBlur';
   onValuesChange?: (values: {[key: string]: any}) => void;
   errorStyle?: TextStyle;
+  ignoreWarning?: boolean
 };
 ```
 
@@ -121,6 +122,12 @@ Trigger when value updated
 Configure the label message error form
 ```
 
+- ignoreWarning `<boolean>`
+
+```
+Remove all warnings from Form
+```
+
 ## Form.Item
 
 <span style="color: #ff4d4f; font-weight: 700; font-size: 20px">! Must be inside the Form</span>
@@ -152,6 +159,8 @@ type FormItem = {
   rules?: Rule[];
   required?: boolean;
   validateTrigger?: 'onChange' | 'onBlur';
+  allowAddItemWhenChangeName?: boolean;
+  keepValueWhenChangeName?: boolean;
 };
 ```
 
@@ -352,6 +361,16 @@ Configure the label stylesheet
 Keep field value even when field removed
 ```
 
+- allowAddItemWhenChangeName `<Boolean>`
+
+```
+- When the name changes in the props, a new Form Item will be added instead of replacing the name
+```
+
+- keepValueWhenChangeName `<Boolean>`
+```
+- Support props allowAddItem WhenChangeName. If true, it will keep the value for the new name
+```
 ---
 
 ## FormInstance
@@ -518,13 +537,6 @@ import {Button} from 'react-native';
 
 const App = () => {
   const form = useForm();
-
-  //If you code using React Hooks then you have to add the below code in the file you are editing
-  // Add Form.fastRefresh() and Form.unMount() follow below
-  useEffect(() => {
-    Form.fastRefresh();
-    return Form.unMount;
-  }, []);
 
   return (
     <Form.ScrollView initialValues={{example: 'example'}}>

@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {Component, useEffect, useMemo} from 'react';
 import {createID, FreezeChild} from '../utils';
 import {
   Create,
@@ -88,7 +88,7 @@ class Form extends GarenateInitValue {
     delete controlRefresh[this.id];
   }
 
-  fastRefresh = async () => {
+  private fastRefresh = async () => {
     const {initialValues = {}, form} = this.props;
     const {forceUpdate} = this.state;
     if (form) {
@@ -107,16 +107,18 @@ class Form extends GarenateInitValue {
     }
   };
 
-  getFieldError = async (name: string) => {
+  private getFieldError = async (name: string) => {
     const {errors, fields} = this.state;
-    if (!fields[name]) {
+    const {ignoreWarning} = this.props;
+    if (!ignoreWarning && !fields[name]) {
       console.warn(`Field ${name} not existed in Form`);
     }
     return errors?.[name];
   };
 
-  getFieldsError = async (names?: string[]) => {
+  private getFieldsError = async (names?: string[]) => {
     const {errors, fields: fds} = this.state;
+    const {ignoreWarning} = this.props;
     let errs: {[key: string]: string | undefined} = {};
     const fields = names || Object.keys(fds || {});
     if (!Array.isArray(fields)) {
@@ -125,7 +127,7 @@ class Form extends GarenateInitValue {
       );
     }
     const promise = fields.map(async field => {
-      if (!fds[field]) {
+      if (!ignoreWarning && !fds[field]) {
         console.warn(`Field ${field} not existed in Form`);
       }
       if (!field.includes('.')) {
@@ -142,7 +144,10 @@ class Form extends GarenateInitValue {
     return errs;
   };
 
-  getFieldsValue = async (names?: string[], filter?: FilterGetValues) => {
+  private getFieldsValue = async (
+    names?: string[],
+    filter?: FilterGetValues,
+  ) => {
     const {touched, validating, values, fields: fds} = this.state;
     let fields = names || Object.keys(fds || {});
     if (!Array.isArray(fields)) {
@@ -171,15 +176,16 @@ class Form extends GarenateInitValue {
     return value;
   };
 
-  getFieldValue = async (name: string) => {
+  private getFieldValue = async (name: string) => {
     const {values, fields} = this.state;
-    if (!fields[name]) {
+    const {ignoreWarning} = this.props;
+    if (!ignoreWarning && !fields[name]) {
       console.warn(`Field ${name} not existed in Form`);
     }
     return values?.[name];
   };
 
-  isFieldsTouched = async (names?: string[], allTouched?: boolean) => {
+  private isFieldsTouched = async (names?: string[], allTouched?: boolean) => {
     const {touched, fields: fds} = this.state;
     const fields = names || Object.keys(fds || {});
     if (!Array.isArray(fields)) {
@@ -193,23 +199,25 @@ class Form extends GarenateInitValue {
     return fields.some(field => touched?.[field]);
   };
 
-  isFieldTouched = async (name: string) => {
+  private isFieldTouched = async (name: string) => {
     const {touched, fields} = this.state;
-    if (!fields[name]) {
+    const {ignoreWarning} = this.props;
+    if (!ignoreWarning && !fields[name]) {
       console.warn(`Field ${name} not existed in Form`);
     }
     return !!touched?.[name];
   };
 
-  isFieldValidating = async (name: string) => {
+  private isFieldValidating = async (name: string) => {
+    const {ignoreWarning} = this.props;
     const {validating, fields} = this.state;
-    if (!fields[name]) {
+    if (!ignoreWarning && !fields[name]) {
       console.warn(`Field ${name} not existed in Form`);
     }
     return !!validating?.[name];
   };
 
-  resetFields = async (names?: string[]) => {
+  private resetFields = async (names?: string[]) => {
     const {
       initialValues,
       touched,
@@ -217,23 +225,24 @@ class Form extends GarenateInitValue {
       validating,
       fields: fds,
     } = this.state;
+    const {ignoreWarning} = this.props;
     const fields = names || Object.keys(fds || {});
     const newValues: {[key: string]: any} = {};
     const promise = fields.map(async field => {
-      if (fds[field]) {
-        newValues[field] = initialValues?.[field];
-        delete touched[field];
-        delete errors[field];
-        delete validating[field];
-      } else {
+      newValues[field] = initialValues?.[field];
+      delete touched[field];
+      delete errors[field];
+      delete validating[field];
+      if (!ignoreWarning && !fds[field]) {
         console.warn(`Field ${field} not existed in Form`);
       }
+      return null;
     });
     await Promise.all(promise);
     this.setState({values: newValues, errors, touched, validating});
   };
 
-  setFields = async (fields: FieldData[]) => {
+  private setFields = async (fields: FieldData[]) => {
     if (!Array.isArray(fields)) {
       return Promise.reject(
         'method setFields allow params the fields must be an array and of type string[]',
@@ -246,19 +255,19 @@ class Form extends GarenateInitValue {
       validating: v,
       fields: fState,
     } = this.state;
+    const {ignoreWarning} = this.props;
     const newValues: {[key: string]: any} = {};
     const errs: {[key: string]: string | undefined} = {};
     const validating: {[key: string]: boolean} = {};
     const touched: {[key: string]: boolean} = {};
     const promise = fields.map(async field => {
-      if (fState[field.name]) {
-        newValues[field.name] = field.value;
-        errors[field.name] = field.error;
-        validating[field.name] =
-          field.validating === undefined ? v?.[field.name] : field.validating;
-        touched[field.name] =
-          field.touched === undefined ? t?.[field.name] : field.touched;
-      } else {
+      newValues[field.name] = field.value;
+      errors[field.name] = field.error;
+      validating[field.name] =
+        field.validating === undefined ? v?.[field.name] : field.validating;
+      touched[field.name] =
+        field.touched === undefined ? t?.[field.name] : field.touched;
+      if (!ignoreWarning && !fState[field.name]) {
         console.warn(`Field ${field.name} not existed in Form`);
       }
     });
@@ -271,45 +280,43 @@ class Form extends GarenateInitValue {
     });
   };
 
-  setFieldValue = async (name: string, value: string) => {
+  private setFieldValue = async (name: string, value: string) => {
     const {fields, values, errors: errs} = this.state;
-    const {validateMessages} = this.props;
-    if (fields[name]) {
-      const errors = await validate(
-        value,
-        fields[name],
-        TriggerAction.all,
-        validateMessages,
-      );
-      this.setState({
-        values: {...values, [name]: value},
-        errors: {...errs, [name]: errors?.[0]},
-      });
-    } else {
+    const {validateMessages, ignoreWarning} = this.props;
+    const errors = await validate(
+      value,
+      fields[name],
+      TriggerAction.all,
+      validateMessages,
+    );
+    this.setState({
+      values: {...values, [name]: value},
+      errors: {...errs, [name]: errors?.[0]},
+    });
+    if (!ignoreWarning && !fields[name]) {
       console.warn(`Field ${name} not existed in Form`);
     }
   };
 
-  setFieldsValue = async (
+  private setFieldsValue = async (
     values: {[key: string]: any},
     forceUpdate?: boolean,
   ) => {
     const {fields, values: vS, errors: errs, forceUpdate: force} = this.state;
-    const {validateMessages} = this.props;
+    const {validateMessages, ignoreWarning} = this.props;
     let errors: {[key: string]: string | undefined} = {};
     const promises = Object.keys(values).map(async key => {
-      if (fields[key]) {
-        return validate(
-          values[key],
-          fields[key],
-          TriggerAction.all,
-          validateMessages,
-        ).then(errrs => {
-          errors[key] = errrs?.[0];
-        });
-      } else {
+      if (!ignoreWarning && !fields[key]) {
         console.warn(`Field ${key} not existed in Form`);
       }
+      return validate(
+        values[key],
+        fields[key],
+        TriggerAction.all,
+        validateMessages,
+      ).then(errrs => {
+        errors[key] = errrs?.[0];
+      });
     });
     await Promise.all(promises);
     this.setState({
@@ -319,7 +326,9 @@ class Form extends GarenateInitValue {
     });
   };
 
-  validateFields = async (names?: string[]): Promise<ValueValidateField> => {
+  private validateFields = async (
+    names?: string[],
+  ): Promise<ValueValidateField> => {
     const {fields: fds, values, errors: errs, layouts} = this.state;
     const {validateMessages, scrollToError} = this.props;
     let fields = names || Object.keys(fds || {});
@@ -377,7 +386,12 @@ class Form extends GarenateInitValue {
     return {values: baseValues, errors: errors.length ? errors : undefined};
   };
 
-  onChangeValue = ({name, value, error, validating}: ParamsOnChangeValue) => {
+  private onChangeValue = ({
+    name,
+    value,
+    error,
+    validating,
+  }: ParamsOnChangeValue) => {
     const {values, touched, validating: vState, errors} = this.state;
     const {onValuesChange} = this.props;
     const validateNew = isNaN(Number(validating)) ? vState?.[name] : validating;
@@ -390,7 +404,7 @@ class Form extends GarenateInitValue {
     onValuesChange?.({...values, [name]: value});
   };
 
-  blurValidate = async (field: string) => {
+  private blurValidate = async (field: string) => {
     const {values, fields, errors: errs} = this.state;
     const {validateMessages} = this.props;
     const errors = await validate(
@@ -404,7 +418,7 @@ class Form extends GarenateInitValue {
     }
   };
 
-  renderProvider = () => {
+  private renderProvider = () => {
     const {form, initialValues} = this.props;
     if (form || !this.context) {
       return {...this.state, initialValues};
@@ -474,7 +488,14 @@ Form.create = function create<T>(Com: React.ComponentType<T>) {
 };
 
 const useForm = (): FormInstance => {
-  return buildForm();
+  const form = useMemo(buildForm, []);
+  useEffect(() => {
+    Form.fastRefresh();
+    return () => {
+      Form.unMount();
+    };
+  }, []);
+  return form;
 };
 
 Form.useForm = useForm;

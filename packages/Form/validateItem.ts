@@ -116,7 +116,7 @@ export const validate = async (
         try {
           await new Promise((reslove, reject) => {
             rule
-              .validator?.(rule, newValue, (messageErr?: string) => {
+              .validator?.({...rule, name}, newValue, (messageErr?: string) => {
                 if (messageErr) {
                   reject(new Error(messageErr));
                 } else {

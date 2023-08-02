@@ -217,7 +217,7 @@ type Rule = {
   transform?: (value: any) => any; //Transform value to the rule before validation
   validateTrigger?: 'onChange' | 'onBlur';
   validator?: (
-    rule: Rule,
+    rule: Rule & {name: string},
     value: any,
     callback: (errorMessage?: string) => void,
   ) => Promise<void | Error>; //Customize validation rule. Accept Promise as return. See example

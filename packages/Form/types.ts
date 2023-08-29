@@ -160,10 +160,10 @@ export const defaultValidateMessages = {
   enum: '${name} must be one of ${enum}',
 };
 
-export declare type Create = <T>(
+export declare type Create = <T, TypeComponent>(
   Component: React.ComponentType<T>,
 ) => React.ForwardRefExoticComponent<
-  React.PropsWithoutRef<T> & React.RefAttributes<unknown>
+  React.PropsWithoutRef<T> & React.RefAttributes<TypeComponent>
 >;
 
 export declare type ValueForm = {

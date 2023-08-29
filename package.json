@@ -1,6 +1,6 @@
 {
   "name": "@rn-form/form",
-  "version": "2.2.4",
+  "version": "2.2.6",
   "license": "UNLICENSED",
   "description": "react native form",
   "main": "lib/commonjs/index.js",

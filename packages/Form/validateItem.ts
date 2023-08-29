@@ -20,6 +20,8 @@ export const validate = async (
     !rules?.length &&
     required &&
     !value &&
+    value !== false &&
+    value !== 0 &&
     (trigger === validateTrigger || trigger === TriggerAction.all)
   ) {
     return [messages.required.replace('${name}', label || name || 'Field')];
@@ -40,7 +42,7 @@ export const validate = async (
         newValue = transform(value);
       }
       if (rule.required) {
-        if (!newValue) {
+        if (!newValue && newValue !== 0 && newValue !== false) {
           return (
             message ||
             messages.required.replace('${name}', label || name || 'Field')

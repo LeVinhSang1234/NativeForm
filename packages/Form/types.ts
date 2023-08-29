@@ -32,6 +32,7 @@ export declare type FormItemDefault = {
 export declare type FormItem = {
   colon?: boolean; //Used with label, whether to display : after label text.
   getValueProps?: (value: any) => any; //Additional props with sub component
+  parserValueProps?: (value: any) => any; //Additional props with sub component
   hidden?: boolean; //Whether to hide Form.Item (still collect and validate value)
   initialValue?: any; //Config sub default value. Form initialValues get higher priority when conflict
   labelAlign?: 'left' | 'right'; //The text align of label

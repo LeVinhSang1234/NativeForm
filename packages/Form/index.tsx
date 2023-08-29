@@ -480,9 +480,9 @@ const buildForm = (): FormInstance => {
   return form;
 };
 
-Form.create = function create<T>(Com: React.ComponentType<T>) {
+Form.create = function create<T, TypeComponent>(Com: React.ComponentType<T>) {
   const form: FormInstance = buildForm();
-  return React.forwardRef((props: T, ref) => (
+  return React.forwardRef<TypeComponent, T>((props: T, ref) => (
     <Com {...props} ref={ref} form={form} />
   ));
 };

@@ -165,6 +165,7 @@ class Item extends Component<FormItem> {
       hidden,
       keepValueWhenChangeName,
       allowAddItemWhenChangeName,
+      parserValueProps,
       ...props
     } = this.props;
     if (hidden) {
@@ -220,7 +221,11 @@ class Item extends Component<FormItem> {
                     validateTrigger={props.validateTrigger}
                     getValueProps={props.getValueProps}
                     valuePropName={props.valuePropName}
-                    value={values?.[name]}
+                    value={
+                      typeof parserValueProps === 'function'
+                        ? parserValueProps(values?.[name])
+                        : values?.[name]
+                    }
                     initialValue={
                       initialValues?.[name] === undefined
                         ? initialValue

@@ -126,6 +126,9 @@ class Item extends Component<FormItem> {
     if (mark === undefined || mark === true) {
       return '*';
     }
+    if (!mark) {
+      return '';
+    }
     return mark;
   };
 

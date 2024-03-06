@@ -487,7 +487,7 @@ Form.create = function create<T, TypeComponent>(Com: React.ComponentType<T>) {
   ));
 };
 
-const useForm = (): FormInstance => {
+export const useForm = (): FormInstance => {
   const form = useMemo(buildForm, []);
   useEffect(() => {
     Form.fastRefresh();

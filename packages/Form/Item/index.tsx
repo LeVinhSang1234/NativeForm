@@ -94,7 +94,6 @@ class Item extends Component<FormItem> {
       {rules, name, label, required, validateTrigger: trigger},
       TriggerAction.onChange,
     );
-    console.log('validateTrigger', trigger);
     onChangeValue({
       value: this.renderValue(value),
       validating: rules?.length ? true : undefined,

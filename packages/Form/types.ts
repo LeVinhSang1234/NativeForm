@@ -14,7 +14,7 @@ export declare type Form = {
   validateMessages?: ValidateMessages; //Validation prompt template
   validateTrigger?: TriggerAction | 'onChange' | 'onBlur'; //Config field validate trigger
   onValuesChange?: (values: {[key: string]: any}) => void; //Trigger when value updated
-  errorStyle?: TextStyle;
+  errorStyle?: TextStyle[] | TextStyle;
   children?: any;
   ignoreWarning?: boolean;
 };

@@ -85,21 +85,16 @@ class Item extends Component<FormItem> {
 
   private onChangeValue = async (
     value: any,
-    trigger?: 'onChange' | 'onBlur',
+    trigger: 'onChange' | 'onBlur',
   ) => {
     const {onChangeValue} = this.context as FormControl;
-    const {
-      rules,
-      name,
-      label,
-      required,
-      validateTrigger = trigger,
-    } = this.props;
+    const {rules, name, label, required} = this.props;
     const errors = await validate(
       this.renderValue(value),
-      {rules, name, label, required, validateTrigger},
+      {rules, name, label, required, validateTrigger: trigger},
       TriggerAction.onChange,
     );
+    console.log('validateTrigger', trigger);
     onChangeValue({
       value: this.renderValue(value),
       validating: rules?.length ? true : undefined,
@@ -117,7 +112,7 @@ class Item extends Component<FormItem> {
       return !!value;
     }
     if (valuePropName === 'number') {
-      return value ? Number(value) : value;
+      return value ? Number(value) || 0 : value;
     }
     return value;
   };
@@ -200,7 +195,7 @@ class Item extends Component<FormItem> {
           }}
         </FormProps.Consumer>
         <FormProps.Consumer>
-          {({validateTrigger: trigger}) => (
+          {({validateTrigger: trigger, errorStyle}) => (
             <FormValues.Consumer>
               {({
                 values,
@@ -211,8 +206,10 @@ class Item extends Component<FormItem> {
                 initialValues,
                 fields,
               }) => {
+                const validateTrigger = props.validateTrigger || trigger;
                 return (
                   <ItemChild
+                    errorStyle={errorStyle}
                     keepValueWhenChangeName={keepValueWhenChangeName}
                     allowAddItemWhenChangeName={allowAddItemWhenChangeName}
                     onBlur={this.onBlur}
@@ -221,7 +218,7 @@ class Item extends Component<FormItem> {
                     label={label}
                     rules={this.garenateRules(fields?.[name]?.rules)}
                     required={required}
-                    validateTrigger={props.validateTrigger}
+                    validateTrigger={validateTrigger as 'onChange' | 'onBlur'}
                     getValueProps={props.getValueProps}
                     valuePropName={props.valuePropName}
                     value={
@@ -238,7 +235,12 @@ class Item extends Component<FormItem> {
                     error={errors?.[name]}
                     touched={!!touched?.[name]}
                     validating={!!validating?.[name]}
-                    onChangeValue={v => this.onChangeValue(v, trigger as any)}
+                    onChangeValue={v =>
+                      this.onChangeValue(
+                        v,
+                        validateTrigger as 'onChange' | 'onBlur',
+                      )
+                    }
                     initItem={this.initItem}
                     addNewInitItem={this.addNewInitItem}>
                     {children}

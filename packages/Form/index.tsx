@@ -406,10 +406,16 @@ class Form extends GarenateInitValue {
 
   private blurValidate = async (field: string) => {
     const {values, fields, errors: errs} = this.state;
-    const {validateMessages} = this.props;
+    const {validateMessages, validateTrigger} = this.props;
+    const fieldProps = fields[field];
     const errors = await validate(
       values[field],
-      fields[field],
+      {
+        ...fieldProps,
+        validateTrigger:
+          fieldProps.validateTrigger ||
+          (validateTrigger as 'onBlur' | 'onChange'),
+      },
       TriggerAction.onBlur,
       validateMessages,
     );

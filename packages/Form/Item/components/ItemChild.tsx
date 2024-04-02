@@ -1,6 +1,7 @@
 import {FormItemDefault} from '../../../Form/types';
 import React, {cloneElement, Component, Fragment} from 'react';
 import TextError from './TextError';
+import {TextStyle} from 'react-native';
 
 interface PropsDefault {
   value?: any;
@@ -22,6 +23,7 @@ interface ItemChildProps extends PropsDefault {
   valuePropName?: 'number' | 'string' | 'checked';
   keepValueWhenChangeName?: boolean;
   allowAddItemWhenChangeName?: boolean;
+  errorStyle?: TextStyle[] | TextStyle;
 }
 
 class ItemChild extends Component<ItemChildProps & FormItemDefault> {
@@ -71,11 +73,11 @@ class ItemChild extends Component<ItemChildProps & FormItemDefault> {
   };
 
   render() {
-    const {error} = this.props;
+    const {error, errorStyle} = this.props;
     return (
       <Fragment>
         {this.renderChildren()}
-        <TextError error={error} />
+        <TextError errorStyle={errorStyle} error={error} />
       </Fragment>
     );
   }

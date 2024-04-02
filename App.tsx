@@ -5,11 +5,11 @@ import Form, {Input, Radio, RadioGroup} from './packages';
 const App = () => {
   const form = Form.useForm();
 
-  const [name, setName] = useState('login');
+  const [name, setName] = useState('login3');
 
   return (
     <SafeAreaView style={styles.view}>
-      <Form name="1" initialValues={{login: ''}}>
+      <Form validateTrigger="onBlur" name="1" initialValues={{login: ''}}>
         <Form.Item name="login" label="Login" validateFirst required>
           <Input placeholder="112121" />
         </Form.Item>
@@ -20,7 +20,7 @@ const App = () => {
             label="Login1"
             rules={[{whitespace: true}, {enum: [1, 2]}]}
             valuePropName="number">
-            <Input placeholder="2" />
+            <Input placeholder="2" keyboardType="numeric" />
           </Form.Item>
           <Form.Item
             preserve

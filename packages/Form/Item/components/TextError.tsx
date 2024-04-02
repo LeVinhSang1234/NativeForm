@@ -7,7 +7,7 @@ const TextAnimated = Animated.createAnimatedComponent(Text);
 
 interface TextErrorProps {
   error?: string;
-  errorStyle?: TextStyle;
+  errorStyle?: TextStyle[] | TextStyle;
 }
 
 class TextError extends Component<TextErrorProps> {

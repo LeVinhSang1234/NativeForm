@@ -1,9 +1,9 @@
-import React from 'react';
+import React, {ReactNode} from 'react';
 import {LayoutRectangle, TextStyle, ViewStyle} from 'react-native';
 
 export declare type Form = {
   colon?: boolean; //Configure the default value of colon for Form.Item. Indicates whether the colon after the label is displayed (only effective when prop layout is horizontal)
-  form?: FormInstanceControl | FormInstance;
+  form?: FormInstances | FormInstance;
   initialValues?: {[key: string]: any}; //default values
   labelAlign?: 'left' | 'right'; //The text align of label of all items
   name?: string; //Form name. Will be the prefix of Field id
@@ -15,7 +15,7 @@ export declare type Form = {
   validateTrigger?: TriggerAction | 'onChange' | 'onBlur'; //Config field validate trigger
   onValuesChange?: (values: {[key: string]: any}) => void; //Trigger when value updated
   errorStyle?: TextStyle[] | TextStyle;
-  children?: any;
+  children?: ReactNode;
   ignoreWarning?: boolean;
 };
 
@@ -43,7 +43,7 @@ export declare type FormItem = {
         onBlur: () => any;
         value?: any;
         error?: string;
-      }) => JSX.Element)
+      }) => JSX.Element | Promise<JSX.Element>)
     | React.ReactNode;
   style?: ViewStyle | ViewStyle[];
   errorStyle?: TextStyle;
@@ -71,7 +71,7 @@ export declare type ValueValidateField = {
 
 export declare type ValueError = {[key: string]: string | undefined};
 
-export declare type FormInstanceControl = {
+export declare type FormInstance = {
   getFieldError: (name: string) => Promise<string | undefined>;
   getFieldsError: (
     names?: string[],
@@ -88,7 +88,7 @@ export declare type FormInstanceControl = {
   validateFields: (names?: string[]) => Promise<ValueValidateField>; //Validate fields
 };
 
-export declare type FormInstance = {
+export declare type FormInstances = {
   getFieldError: (
     name: string,
   ) => Promise<(string | undefined)[] | string | undefined>;

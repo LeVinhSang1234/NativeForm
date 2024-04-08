@@ -1,5 +1,13 @@
 import {FormItemDefault} from '../../../Form/types';
-import React, {cloneElement, Component, Fragment} from 'react';
+import React, {
+  cloneElement,
+  Component,
+  FC,
+  Fragment,
+  ReactNode,
+  useEffect,
+  useState,
+} from 'react';
 import TextError from './TextError';
 import {TextStyle} from 'react-native';
 
@@ -67,6 +75,9 @@ class ItemChild extends Component<ItemChildProps & FormItemDefault> {
       onBlur,
     };
     if (typeof children === 'function') {
+      if (typeof children(props).then === 'function') {
+        return <PromiseComponent>{children(props)}</PromiseComponent>;
+      }
       return children(props);
     }
     return cloneElement(children as any, props);
@@ -82,5 +93,15 @@ class ItemChild extends Component<ItemChildProps & FormItemDefault> {
     );
   }
 }
+
+const PromiseComponent: FC<{children: Promise<ReactNode>}> = ({children}) => {
+  const [data, setData] = useState<ReactNode>(null);
+
+  useEffect(() => {
+    children.then((result: ReactNode) => setData(result));
+  }, [children]);
+
+  return <>{data}</>;
+};
 
 export default ItemChild;

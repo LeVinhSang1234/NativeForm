@@ -149,7 +149,7 @@ type FormItem = {
       value?: any;
       error?: string;
     }
-  ) => JSX.Element
+  ) => JSX.Element | Promise<JSX.Element>
   style?: ViewStyle | ViewStyle[];
   errorStyle?: TextStyle;
   labelStyle?: TextStyle;

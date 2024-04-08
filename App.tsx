@@ -9,11 +9,15 @@ const App = () => {
 
   return (
     <SafeAreaView style={styles.view}>
-      <Form validateTrigger="onBlur" name="1" initialValues={{login: ''}}>
+      <Form
+        validateTrigger="onBlur"
+        name="1"
+        initialValues={{login: ''}}
+        form={form}>
         <Form.Item name="login" label="Login" validateFirst required>
           <Input placeholder="112121" />
         </Form.Item>
-        <Form.ScrollView form={form}>
+        <Form.ScrollView>
           <Form.Item
             name="login"
             initialValue="12"
@@ -39,15 +43,23 @@ const App = () => {
           <Form.Item name="checkbox" label="checkbox">
             <Radio label="radio 1" />
           </Form.Item>
+          <Form.Item name="">
+            {async () => {
+              const error = await form.getFieldsError();
+              console.log('ewe', error);
+              return (
+                <Button
+                  title="Rename Field"
+                  onPress={async () => {
+                    setName('logon1');
+                  }}
+                />
+              );
+            }}
+          </Form.Item>
         </Form.ScrollView>
       </Form>
 
-      <Button
-        title="Rename Field"
-        onPress={async () => {
-          setName('logon1');
-        }}
-      />
       <Button
         title="Validate Form 2"
         onPress={async () => {

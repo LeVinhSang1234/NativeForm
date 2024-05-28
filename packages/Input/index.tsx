@@ -50,6 +50,10 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
   UNSAFE_componentWillReceiveProps(nProps: ITextInputProps & TextInputProps) {
     const {error} = this.props;
     const {isFocus} = this.state;
+    const {value} = nProps;
+    if (value === undefined) {
+      this.TextInput?.clear();
+    }
     if (!error && nProps.error) {
       Animated.timing(this.animatedInput, {
         toValue: 2,
@@ -75,6 +79,10 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
 
   blur = () => {
     this.TextInput?.blur();
+  };
+
+  clear = () => {
+    this.TextInput?.clear();
   };
 
   private onFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
@@ -114,6 +122,7 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
       onChange,
       onChangeValue,
       multiline,
+      onChangeText,
       ...props
     } = this.props;
     const {scheme} = this.state;
@@ -136,7 +145,10 @@ class Input extends Component<ITextInputProps & TextInputProps, IState> {
           multiline={multiline}
           style={[{color}, styleInput]}
           onChange={onChange}
-          onChangeText={onChangeValue}
+          onChangeText={t => {
+            onChangeValue?.(t);
+            onChangeText?.(t);
+          }}
           onBlur={this.onBlur}
           onFocus={this.onFocus}>
           {value}

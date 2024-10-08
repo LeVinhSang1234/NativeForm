@@ -8,6 +8,7 @@ import {
   TriggerAction,
   FormItemDefault,
   Rule,
+  ValidateMessages,
 } from '../types';
 import {validate} from '../validateItem';
 import ItemChild from './components/ItemChild';
@@ -86,6 +87,7 @@ class Item extends Component<FormItem> {
   private onChangeValue = async (
     value: any,
     trigger: 'onChange' | 'onBlur',
+    validateMessages?: ValidateMessages,
   ) => {
     const {onChangeValue} = this.context as FormControl;
     const {rules, name, label, required} = this.props;
@@ -93,6 +95,7 @@ class Item extends Component<FormItem> {
       this.renderValue(value),
       {rules, name, label, required, validateTrigger: trigger},
       TriggerAction.onChange,
+      validateMessages,
     );
     onChangeValue({
       value: this.renderValue(value),
@@ -194,7 +197,7 @@ class Item extends Component<FormItem> {
           }}
         </FormProps.Consumer>
         <FormProps.Consumer>
-          {({validateTrigger: trigger, errorStyle}) => (
+          {({validateTrigger: trigger, errorStyle, validateMessages}) => (
             <FormValues.Consumer>
               {({
                 values,
@@ -238,6 +241,7 @@ class Item extends Component<FormItem> {
                       this.onChangeValue(
                         v,
                         validateTrigger as 'onChange' | 'onBlur',
+                        validateMessages,
                       )
                     }
                     initItem={this.initItem}

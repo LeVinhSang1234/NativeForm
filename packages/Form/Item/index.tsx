@@ -167,6 +167,7 @@ class Item extends Component<FormItem> {
       allowAddItemWhenChangeName,
       parserValueProps,
       style,
+      errorStyle: errorStyleProps,
       ...props
     } = this.props;
     if (hidden) {
@@ -212,7 +213,7 @@ class Item extends Component<FormItem> {
                 const validateTrigger = props.validateTrigger || trigger;
                 return (
                   <ItemChild
-                    errorStyle={errorStyle}
+                    errorStyle={[errorStyle, errorStyleProps]}
                     keepValueWhenChangeName={keepValueWhenChangeName}
                     allowAddItemWhenChangeName={allowAddItemWhenChangeName}
                     onBlur={this.onBlur}

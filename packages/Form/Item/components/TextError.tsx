@@ -1,13 +1,13 @@
 import React, {Component} from 'react';
 import {color} from '../../../utils';
-import {Animated, StyleSheet, TextStyle, View} from 'react-native';
+import {Animated, StyleProp, StyleSheet, TextStyle, View} from 'react-native';
 import Text from '../../../Text';
 
 const TextAnimated = Animated.createAnimatedComponent(Text);
 
 interface TextErrorProps {
   error?: string;
-  errorStyle?: TextStyle[] | TextStyle;
+  errorStyle?: StyleProp<TextStyle>;
 }
 
 class TextError extends Component<TextErrorProps> {

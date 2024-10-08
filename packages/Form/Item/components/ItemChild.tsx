@@ -9,7 +9,7 @@ import React, {
   useState,
 } from 'react';
 import TextError from './TextError';
-import {TextStyle} from 'react-native';
+import {StyleProp, TextStyle} from 'react-native';
 
 interface PropsDefault {
   value?: any;
@@ -31,7 +31,7 @@ interface ItemChildProps extends PropsDefault {
   valuePropName?: 'number' | 'string' | 'checked';
   keepValueWhenChangeName?: boolean;
   allowAddItemWhenChangeName?: boolean;
-  errorStyle?: TextStyle[] | TextStyle;
+  errorStyle?: StyleProp<TextStyle>;
 }
 
 class ItemChild extends Component<ItemChildProps & FormItemDefault> {

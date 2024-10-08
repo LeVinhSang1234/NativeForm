@@ -166,6 +166,7 @@ class Item extends Component<FormItem> {
       keepValueWhenChangeName,
       allowAddItemWhenChangeName,
       parserValueProps,
+      style,
       ...props
     } = this.props;
     if (hidden) {
@@ -173,7 +174,7 @@ class Item extends Component<FormItem> {
     }
     const required = this.getRequire();
     return (
-      <View onLayout={this.setLayout}>
+      <View onLayout={this.setLayout} style={style}>
         <FormProps.Consumer>
           {({
             colon,

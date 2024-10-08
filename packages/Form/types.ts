@@ -1,5 +1,5 @@
 import React, {ReactNode} from 'react';
-import {LayoutRectangle, TextStyle, ViewStyle} from 'react-native';
+import {LayoutRectangle, StyleProp, TextStyle, ViewStyle} from 'react-native';
 
 export declare type Form = {
   colon?: boolean; //Configure the default value of colon for Form.Item. Indicates whether the colon after the label is displayed (only effective when prop layout is horizontal)
@@ -14,7 +14,7 @@ export declare type Form = {
   validateMessages?: ValidateMessages; //Validation prompt template
   validateTrigger?: TriggerAction | 'onChange' | 'onBlur'; //Config field validate trigger
   onValuesChange?: (values: {[key: string]: any}) => void; //Trigger when value updated
-  errorStyle?: TextStyle[] | TextStyle;
+  errorStyle?: StyleProp<TextStyle>;
   children?: ReactNode;
   ignoreWarning?: boolean;
 };
@@ -45,9 +45,9 @@ export declare type FormItem = {
         error?: string;
       }) => JSX.Element | Promise<JSX.Element>)
     | React.ReactNode;
-  style?: ViewStyle | ViewStyle[];
-  errorStyle?: TextStyle;
-  labelStyle?: TextStyle;
+  style?: StyleProp<ViewStyle>;
+  errorStyle?: StyleProp<TextStyle>;
+  labelStyle?: StyleProp<TextStyle>;
   allowAddItemWhenChangeName?: boolean;
   keepValueWhenChangeName?: boolean;
 } & FormItemDefault;

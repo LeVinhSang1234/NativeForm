@@ -1,4 +1,4 @@
-import React, {Component, useEffect, useMemo} from 'react';
+import React, {Component, useCallback, useEffect, useMemo} from 'react';
 import {createID} from '../utils';
 import {
   Create,
@@ -456,12 +456,25 @@ const buildForm = (): FormInstance => {
 Form.create = function create<T, TypeComponent>(Com: React.ComponentType<T>) {
   const form: FormInstance = buildForm();
   return React.forwardRef<TypeComponent, T>((props: T, ref) => (
-    <Com {...props} ref={ref} form={form} />
+    <Com
+      {...props}
+      ref={ref}
+      form={{
+        ...form,
+        isReady: async () => {
+          await new Promise(res => setTimeout(res, 200));
+        },
+      }}
+    />
   ));
 };
 
 export function useForm<T = Record<string, any>>(): FormInstance<T> {
   const form = useMemo(buildForm, []);
+  const isReady = useCallback(async () => {
+    await new Promise(res => setTimeout(res, 200));
+  }, []);
+
   useEffect(() => {
     //@ts-ignore
     Form.fastRefresh();
@@ -471,7 +484,7 @@ export function useForm<T = Record<string, any>>(): FormInstance<T> {
     };
   }, []);
   //@ts-ignore
-  return form;
+  return {...form, isReady};
 }
 
 Form.useForm = useForm;

@@ -19,7 +19,6 @@ type Form = {
   validateTrigger?: 'onChange' | 'onBlur';
   onValuesChange?: (values: {[key: string]: any}) => void;
   errorStyle?: TextStyle;
-  ignoreWarning?: boolean
 };
 ```
 
@@ -120,12 +119,6 @@ Trigger when value updated
 
 ```
 Configure the label message error form
-```
-
-- ignoreWarning `<boolean>`
-
-```
-Remove all warnings from Form
 ```
 
 ## Form.Item

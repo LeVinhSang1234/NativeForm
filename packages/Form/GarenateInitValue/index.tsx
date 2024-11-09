@@ -26,8 +26,8 @@ interface FormState extends ValueForm {
   forceUpdate: boolean;
 }
 
-class GarenateInitValue extends Component<
-  Form & {scrollToError?: (y: number) => void},
+class GarenateInitValue<Type> extends Component<
+  Form<Type> & {scrollToError?: (y: number) => void},
   FormState
 > {
   promises: Promise<any | void>[];
@@ -37,7 +37,7 @@ class GarenateInitValue extends Component<
   promiseClears: Promise<any | void>[];
   promiseLayouts: Promise<any | void>[];
 
-  constructor(props: Form) {
+  constructor(props: Form<Type>) {
     super(props);
     const {initialValues = {}} = props;
     this.promises = [];

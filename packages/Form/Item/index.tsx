@@ -14,26 +14,26 @@ import {validate} from '../validateItem';
 import ItemChild from './components/ItemChild';
 import Text from '../../Text';
 
-interface PropsItem extends FormItemDefault {
+interface PropsItem<T = Record<string, any>> extends FormItemDefault<T> {
   validateFirst?: boolean;
   getValueProps?: (value: any) => any;
   valuePropName?: 'number' | 'string' | 'checked';
 }
 
-class Item extends Component<FormItem> {
+class Item<T = Record<string, any>> extends Component<FormItem<T>> {
   componentWillUnmount() {
     const {name, preserve} = this.props;
     if (!preserve) {
-      const {clearField} = this.context as FormControl;
+      const {clearField} = this.context as FormControl<T>;
       clearField(name);
     }
   }
 
-  UNSAFE_componentWillReceiveProps(nProps: FormItem) {
+  UNSAFE_componentWillReceiveProps(nProps: FormItem<T>) {
     const {name} = this.props;
     const {preserve, allowAddItemWhenChangeName} = nProps;
     if (name !== nProps.name) {
-      const {clearField, renameLayout} = this.context as FormControl;
+      const {clearField, renameLayout} = this.context as FormControl<T>;
       if (!allowAddItemWhenChangeName && renameLayout) {
         renameLayout(name, nProps.name);
       }
@@ -43,7 +43,7 @@ class Item extends Component<FormItem> {
     }
   }
 
-  private initItem = (value: any, props: PropsItem = this.props) => {
+  private initItem = (value: any, props: PropsItem<T> = this.props) => {
     const {
       validateFirst,
       name,
@@ -62,11 +62,12 @@ class Item extends Component<FormItem> {
     }
     funCall({
       value: valuePropName === 'checked' ? !!value : getValueProps(value),
+      //@ts-ignore
       propsItem: {name, label, rules, required, validateTrigger, preserve},
     });
   };
 
-  private addNewInitItem = (value: any, props: PropsItem = this.props) => {
+  private addNewInitItem = (value: any, props: PropsItem<T> = this.props) => {
     const {
       name,
       label,
@@ -77,9 +78,10 @@ class Item extends Component<FormItem> {
       valuePropName,
       preserve,
     } = props;
-    const {setField} = this.context as FormControl;
+    const {setField} = this.context as FormControl<T>;
     setField({
       value: valuePropName === 'checked' ? !!value : getValueProps(value),
+      //@ts-ignore
       propsItem: {name, label, rules, required, validateTrigger, preserve},
     });
   };
@@ -89,10 +91,11 @@ class Item extends Component<FormItem> {
     trigger: 'onChange' | 'onBlur',
     validateMessages?: ValidateMessages,
   ) => {
-    const {onChangeValue} = this.context as FormControl;
+    const {onChangeValue} = this.context as FormControl<T>;
     const {rules, name, label, required} = this.props;
     const errors = await validate(
       this.renderValue(value),
+      //@ts-ignore
       {rules, name, label, required, validateTrigger: trigger},
       TriggerAction.onChange,
       validateMessages,
@@ -100,6 +103,7 @@ class Item extends Component<FormItem> {
     onChangeValue({
       value: this.renderValue(value),
       validating: rules?.length ? true : undefined,
+      //@ts-ignore
       name,
       error: errors?.[0],
     });
@@ -137,6 +141,7 @@ class Item extends Component<FormItem> {
   private setLayout = (event: LayoutChangeEvent) => {
     const {name} = this.props;
     const {setLayout} = this.context as FormControl;
+    //@ts-ignore
     setLayout?.({name: name, layout: event.nativeEvent.layout});
   };
 
@@ -151,6 +156,7 @@ class Item extends Component<FormItem> {
   private onBlur = () => {
     const {name} = this.props;
     const {blurValidate} = this.context as FormControl;
+    //@ts-ignore
     blurValidate?.(name);
   };
 
@@ -218,6 +224,7 @@ class Item extends Component<FormItem> {
                     allowAddItemWhenChangeName={allowAddItemWhenChangeName}
                     onBlur={this.onBlur}
                     validateFirst={props.validateFirst}
+                    //@ts-ignore
                     name={name}
                     label={label}
                     rules={this.garenateRules(fields?.[name]?.rules)}

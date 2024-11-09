@@ -87,7 +87,7 @@ export declare type FormInstance<T = Record<string, any>> = {
   resetFields: (fields?: (keyof T)[]) => Promise<void>; //Reset fields to initialValues
   setFields: (fields: FieldData<T>[]) => Promise<void>; //Set fields status
   setFieldValue: (name: keyof T, value: any) => Promise<any>; //Set fields value(Will directly pass to form store. If you do not want to modify passed object, please clone first)
-  setFieldsValue: (values: {[key in keyof T]: any}) => Promise<any>; //Set fields value(Will directly pass to form store. If you do not want to modify passed object, please clone first).
+  setFieldsValue: (values: {[key in keyof T]?: any}) => Promise<any>; //Set fields value(Will directly pass to form store. If you do not want to modify passed object, please clone first).
   validateFields: (names?: (keyof T)[]) => Promise<ValueValidateField<T>>; //Validate fields
 };
 
@@ -110,7 +110,7 @@ export declare type FormInstances<T = Record<string, any>> = {
   resetFields: (fields?: (keyof T)[]) => Promise<void>; //Reset fields to initialValues
   setFields: (fields: FieldData<T>[]) => Promise<void>; //Set fields status
   setFieldValue: (name: keyof T, value: any) => Promise<void>; //Set fields value(Will directly pass to form store. If you do not want to modify passed object, please clone first)
-  setFieldsValue: (values: {[key in keyof T]: any}) => Promise<void>; //Set fields value(Will directly pass to form store. If you do not want to modify passed object, please clone first).
+  setFieldsValue: (values: {[key in keyof T]?: any}) => Promise<void>; //Set fields value(Will directly pass to form store. If you do not want to modify passed object, please clone first).
   validateFields: (
     names?: (keyof T)[],
   ) => Promise<Array<ValueValidateField<T>> | ValueValidateField<T>>; //Validate fields

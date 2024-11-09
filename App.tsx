@@ -1,9 +1,9 @@
 import React, {useState} from 'react';
 import {Button, SafeAreaView, StyleSheet} from 'react-native';
-import Form, {Input, Radio, RadioGroup} from './packages';
+import Form, {Input, Radio, RadioGroup, useForm} from './packages';
 
 const App = () => {
-  const form = Form.useForm<{login: string}>();
+  const form = useForm<{login: string}>();
   const [name, setName] = useState('login3');
 
   return (

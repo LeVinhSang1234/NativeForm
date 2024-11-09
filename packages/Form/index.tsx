@@ -453,7 +453,7 @@ Form.create = function create<T, TypeComponent>(Com: React.ComponentType<T>) {
   ));
 };
 
-export const useForm = () => {
+export function useForm<T = Record<string, any>>(): FormInstance<T> {
   const form = useMemo(buildForm, []);
   useEffect(() => {
     Form.fastRefresh();
@@ -461,8 +461,9 @@ export const useForm = () => {
       Form.unMount();
     };
   }, []);
+  //@ts-ignore
   return form;
-};
+}
 
 // @ts-ignore
 Form.useForm = useForm;

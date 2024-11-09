@@ -1,5 +1,3 @@
-import {Component} from 'react';
-
 const characters =
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -14,18 +12,6 @@ export function createID(r: number = 16, space?: string): string {
     }
   }
   return a;
-}
-
-export class FreezeChild extends Component<{reload?: any}> {
-  shouldComponentUpdate(nProps: {reload?: boolean}) {
-    const {reload} = this.props;
-    return reload !== nProps.reload;
-  }
-
-  render() {
-    const {children} = this.props;
-    return children;
-  }
 }
 
 export const color = {

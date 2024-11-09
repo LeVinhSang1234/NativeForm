@@ -24,6 +24,7 @@ interface FormState extends ValueForm {
   initialValues?: {[key: string]: any};
   layouts: {[key: string]: LayoutRectangle};
   forceUpdate: boolean;
+  init: boolean;
 }
 
 class GarenateInitValue<Type> extends Component<
@@ -52,6 +53,7 @@ class GarenateInitValue<Type> extends Component<
       initialValues,
       layouts: {},
       forceUpdate: false,
+      init: false,
     };
   }
 
@@ -171,6 +173,7 @@ class GarenateInitValue<Type> extends Component<
         validating: newValidating,
         fields: fds,
         initialValues: newValues,
+        init: true,
       });
     }, 100);
   };

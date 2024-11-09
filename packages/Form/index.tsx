@@ -1,5 +1,5 @@
 import React, {Component, useEffect, useMemo} from 'react';
-import {createID, FreezeChild} from '../utils';
+import {createID} from '../utils';
 import {
   Create,
   Form as FormTypes,
@@ -34,6 +34,7 @@ const methods: (keyof FormInstance)[] = [
   'setFieldValue',
   'setFieldsValue',
   'validateFields',
+  'isReady',
 ];
 
 class Form<Type = Record<string, any>> extends GarenateInitValue<Type> {
@@ -41,9 +42,6 @@ class Form<Type = Record<string, any>> extends GarenateInitValue<Type> {
   static Item: typeof Item;
   static ScrollView: typeof ScrollView;
   static create: Create;
-  static useForm: <T = any>() => FormInstance<T>;
-  static fastRefresh: () => void;
-  static unMount: () => void;
   id: string;
   unmount: boolean;
 
@@ -87,6 +85,13 @@ class Form<Type = Record<string, any>> extends GarenateInitValue<Type> {
     delete formHandle[this.id];
     delete controlRefresh[this.id];
   }
+
+  private isReady = async (): Promise<void> => {
+    if (!this.state.init) {
+      await new Promise(res => setTimeout(res, 10));
+      return await this.isReady();
+    }
+  };
 
   private fastRefresh = async () => {
     const {initialValues = {}, form} = this.props;
@@ -400,29 +405,27 @@ class Form<Type = Record<string, any>> extends GarenateInitValue<Type> {
     return (
       <FormValues.Provider value={this.renderProvider()}>
         <FormProps.Provider value={props as any}>
-          <FreezeChild reload={children}>
-            <FormControlProvider.Consumer>
-              {control => {
-                let pro = control;
-                if (props.form || !pro) {
-                  pro = {
-                    setField: this.setField,
-                    clearField: this.clearField,
-                    validateField: this.validateFieldFirst,
-                    onChangeValue: this.onChangeValue,
-                    setLayout: this.setLayout,
-                    renameLayout: this.renameLayout,
-                    blurValidate: this.blurValidate,
-                  };
-                }
-                return (
-                  <FormControlProvider.Provider value={pro}>
-                    {children}
-                  </FormControlProvider.Provider>
-                );
-              }}
-            </FormControlProvider.Consumer>
-          </FreezeChild>
+          <FormControlProvider.Consumer>
+            {control => {
+              let pro = control;
+              if (props.form || !pro) {
+                pro = {
+                  setField: this.setField,
+                  clearField: this.clearField,
+                  validateField: this.validateFieldFirst,
+                  onChangeValue: this.onChangeValue,
+                  setLayout: this.setLayout,
+                  renameLayout: this.renameLayout,
+                  blurValidate: this.blurValidate,
+                };
+              }
+              return (
+                <FormControlProvider.Provider value={pro}>
+                  {children}
+                </FormControlProvider.Provider>
+              );
+            }}
+          </FormControlProvider.Consumer>
         </FormProps.Provider>
       </FormValues.Provider>
     );
@@ -459,8 +462,10 @@ Form.create = function create<T, TypeComponent>(Com: React.ComponentType<T>) {
 export function useForm<T = Record<string, any>>(): FormInstance<T> {
   const form = useMemo(buildForm, []);
   useEffect(() => {
+    //@ts-ignore
     Form.fastRefresh();
     return () => {
+      //@ts-ignore
       Form.unMount();
     };
   }, []);
@@ -470,14 +475,14 @@ export function useForm<T = Record<string, any>>(): FormInstance<T> {
 
 // @ts-ignore
 Form.useForm = useForm;
-
+//@ts-ignore
 Form.unMount = async () => {
   const promise = Object.keys(controlRefresh).map(async key => {
     controlRefresh[key]?.unmount();
   });
   Promise.all(promise);
 };
-
+//@ts-ignore
 Form.fastRefresh = async () => {
   const promise = Object.keys(controlRefresh).map(async key => {
     controlRefresh[key]?.fastRefresh();

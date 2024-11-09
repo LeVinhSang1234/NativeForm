@@ -529,21 +529,21 @@ import Form, {Input} from '@form-rn/form';
 import {Button} from 'react-native';
 
 const App = () => {
-  const form = useForm();
+  const form = useForm<Data>();
 
   return (
     <Form.ScrollView initialValues={{example: 'example'}}>
-      <Form.Item name="example" initialValue="12" label="Example">
+      <Form.Item<Data> name="example" initialValue="12" label="Example">
         <Input placeholder="2" />
       </Form.Item>
-      <Form.Item name="radioGroup" label="Login2" required validateFirst>
+      <Form.Item<Data> name="radioGroup" label="Login2" required validateFirst>
         <RadioGroup>
           <Radio value={1} label="radio 1" />
           <Radio value={2} label="radio 2" />
           <Radio value={3} label="radio 3" />
         </RadioGroup>
       </Form.Item>
-      <Form.Item name="radio" label="Login2" required validateFirst>
+      <Form.Item<Data> name="radio" label="Login2" required validateFirst>
         <Radio label="radio 1" />
       </Form.Item>
       <Button
@@ -596,7 +596,7 @@ export default App;
 import React from 'react';
 import Form, {Input} from '@form-rn/form';
 import {Button} from 'react-native';
-class App extends Component<{form: FormInstance}> {
+class App extends Component<{form: FormInstance<Data>}> {
   render() {
     const {form} = this.props;
     return (

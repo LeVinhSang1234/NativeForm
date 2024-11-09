@@ -1,4 +1,4 @@
-import React, {Component, useCallback, useEffect, useMemo} from 'react';
+import React, {Component, useEffect, useMemo} from 'react';
 import {createID} from '../utils';
 import {
   Create,
@@ -34,7 +34,6 @@ const methods: (keyof FormInstance)[] = [
   'setFieldValue',
   'setFieldsValue',
   'validateFields',
-  'isReady',
 ];
 
 class Form<Type = Record<string, any>> extends GarenateInitValue<Type> {
@@ -72,11 +71,13 @@ class Form<Type = Record<string, any>> extends GarenateInitValue<Type> {
     const {form, name} = this.props;
     if (form) {
       for (const method of methods) {
+        //@ts-ignore
         form[method] = this[method] as any;
       }
     } else if (!this.context) {
       formHandle[this.id] = {name} as any;
       for (const method of methods) {
+        //@ts-ignore
         (formHandle[this.id] as any)[method] = this[method];
       }
     }
@@ -86,13 +87,6 @@ class Form<Type = Record<string, any>> extends GarenateInitValue<Type> {
     delete formHandle[this.id];
     delete controlRefresh[this.id];
   }
-
-  private isReady = async (): Promise<void> => {
-    if (!this.state.init) {
-      await new Promise(res => setTimeout(res, 10));
-      return await this.isReady();
-    }
-  };
 
   private fastRefresh = async () => {
     const {initialValues = {}, form} = this.props;
@@ -450,31 +444,19 @@ const buildForm = (): FormInstance => {
       return values;
     };
   });
+  form.isReady = false;
   return form;
 };
 
 Form.create = function create<T, TypeComponent>(Com: React.ComponentType<T>) {
   const form: FormInstance = buildForm();
   return React.forwardRef<TypeComponent, T>((props: T, ref) => (
-    <Com
-      {...props}
-      ref={ref}
-      form={{
-        ...form,
-        isReady: async () => {
-          await new Promise(res => setTimeout(res, 200));
-        },
-      }}
-    />
+    <Com {...props} ref={ref} form={form} />
   ));
 };
 
 export function useForm<T = Record<string, any>>(): FormInstance<T> {
   const form = useMemo(buildForm, []);
-  const isReady = useCallback(async () => {
-    await new Promise(res => setTimeout(res, 200));
-  }, []);
-
   useEffect(() => {
     //@ts-ignore
     Form.fastRefresh();
@@ -484,7 +466,7 @@ export function useForm<T = Record<string, any>>(): FormInstance<T> {
     };
   }, []);
   //@ts-ignore
-  return {...form, isReady};
+  return form;
 }
 
 Form.useForm = useForm;

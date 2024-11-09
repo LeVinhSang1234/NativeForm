@@ -24,7 +24,6 @@ interface FormState extends ValueForm {
   initialValues?: {[key: string]: any};
   layouts: {[key: string]: LayoutRectangle};
   forceUpdate: boolean;
-  init: boolean;
 }
 
 class GarenateInitValue<Type> extends Component<
@@ -53,7 +52,6 @@ class GarenateInitValue<Type> extends Component<
       initialValues,
       layouts: {},
       forceUpdate: false,
-      init: false,
     };
   }
 
@@ -130,6 +128,7 @@ class GarenateInitValue<Type> extends Component<
   promiseInitValueFirst = async () => {
     const {errors, fields, validating, values} = this.state;
     this.timeout = setTimeout(async () => {
+      const {form} = this.props;
       this.timeout = undefined;
       const validates: ValuePassing[] = await Promise.all(this.promises);
       if (this.timeout) {
@@ -173,8 +172,10 @@ class GarenateInitValue<Type> extends Component<
         validating: newValidating,
         fields: fds,
         initialValues: newValues,
-        init: true,
       });
+      if (form) {
+        form.isReady = true;
+      }
     }, 100);
   };
 

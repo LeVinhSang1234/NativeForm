@@ -44,6 +44,7 @@ class Form<Type = Record<string, any>> extends GarenateInitValue<Type> {
   static create: Create;
   id: string;
   unmount: boolean;
+  static useForm: <T = Record<string, any>>() => FormInstance<T>;
 
   constructor(props: FormTypes<Type>) {
     super(props);
@@ -473,7 +474,6 @@ export function useForm<T = Record<string, any>>(): FormInstance<T> {
   return form;
 }
 
-// @ts-ignore
 Form.useForm = useForm;
 //@ts-ignore
 Form.unMount = async () => {

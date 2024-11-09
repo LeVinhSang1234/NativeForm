@@ -269,14 +269,17 @@ class Form<Type = Record<string, any>> extends GarenateInitValue<Type> {
     const {validateMessages} = this.props;
     let errors: {[key: string]: string | undefined} = {};
     const promises = Object.keys(values).map(async key => {
-      return validate(
-        values[key],
-        fields[key],
-        TriggerAction.all,
-        validateMessages,
-      ).then(errrs => {
-        errors[key] = errrs?.[0];
-      });
+      return (
+        fields[key] &&
+        validate(
+          values[key],
+          fields[key],
+          TriggerAction.all,
+          validateMessages,
+        ).then(errrs => {
+          errors[key] = errrs?.[0];
+        })
+      );
     });
     await Promise.all(promises);
     this.setState({

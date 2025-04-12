@@ -1,0 +1,35 @@
+{
+  "name": "@rn-form/form",
+  "version": "3.1.6",
+  "license": "UNLICENSED",
+  "description": "react native form",
+  "main": "lib/commonjs/index.js",
+  "types": "lib/index.d.ts",
+  "author": "SangLv <lsang2884@gmail.com>",
+  "homepage": "https://github.com/LeVinhSang1234/NativeForm.git",
+  "scripts": {},
+  "files": [
+    "lib",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__"
+  ],
+  "eslintIgnore": [
+    "node_modules/",
+    "lib/"
+  ],
+  "directories": {
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeVinhSang1234/NativeForm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/LeVinhSang1234/NativeForm/issues"
+  },
+  "keywords": [
+    "react native form",
+    "rn-form"
+  ]
+}

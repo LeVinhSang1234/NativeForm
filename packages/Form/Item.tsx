@@ -66,7 +66,9 @@ const Item = ({
   }, [name, props, setField, unmountField]);
 
   useEffect(() => {
+    if (values[name]?.value === _value.value) return;
     _setValue({value: values[name]?.value});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name, values]);
 
   const onChangeValue = useCallback(
@@ -79,9 +81,11 @@ const Item = ({
   );
 
   useEffect(() => {
+    const {value, error} = values[name] || {};
+    if (value === _value.value && error === _value.error) return;
     setValue(name, _value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_value]);
+  }, [_value, name]);
 
   const onBlur = useCallback(async () => {
     const _error = await validate(_value.value, props, TriggerAction.onBlur);

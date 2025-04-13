@@ -58,6 +58,7 @@ export const FormProvider = ({
   form,
   initialValues = {},
   scrollTo,
+  onValuesChange,
   ...p
 }: PropsWithChildren<
   TForm & {form: FormInstance<any>; scrollTo?: (y: number) => void}
@@ -87,11 +88,15 @@ export const FormProvider = ({
     layout.current[name] = rect;
   }, []);
 
-  const setValue = useCallback((name: string, value: any) => {
-    if (!values.current) values.current = {};
-    values.current[name] = value;
-    if (!touched.current[name]) touched.current[name] = true;
-  }, []);
+  const setValue = useCallback(
+    (name: string, value: any) => {
+      if (!values.current) values.current = {};
+      values.current[name] = value;
+      if (!touched.current[name]) touched.current[name] = true;
+      if (touched.current[name]) onValuesChange?.(values.current);
+    },
+    [onValuesChange],
+  );
 
   const unmountField = useCallback((name: string) => {
     delete layout.current[name];

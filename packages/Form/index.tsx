@@ -56,6 +56,7 @@ const ScrollView = <T,>({
   onValuesChange,
   errorStyle,
   labelStyle,
+  children,
   ...props
 }: PropsWithChildren<Omit<TForm<T>, 'style'> & ScrollViewProps>) => {
   const refScroll = useRef<ScrollViewLibray>(null);
@@ -81,8 +82,9 @@ const ScrollView = <T,>({
         onValuesChange={onValuesChange}
         errorStyle={errorStyle}
         labelStyle={labelStyle}
-        scrollTo={scrollTo}
-      />
+        scrollTo={scrollTo}>
+        {children}
+      </FormProvider>
     </ScrollViewLibray>
   );
 };

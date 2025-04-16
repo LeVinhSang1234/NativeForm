@@ -23,7 +23,7 @@ const methods: (keyof FormInstance)[] = [
   'setFieldError',
 ];
 
-export const useForm = <T,>(): FormInstance<T> => {
+export const useForm = <T = any,>(): FormInstance<T> => {
   const form = methods.reduce((acc, method) => {
     // @ts-ignore
     acc[method] = () => null;
@@ -42,11 +42,22 @@ const Form = <T,>({style, ...props}: PropsWithChildren<TForm<T>>) => {
 };
 
 const ScrollView = <T,>({
-  scrollViewProps,
+  form,
+  colon,
+  initialValues,
+  labelAlign,
+  name,
+  preserve,
+  requiredMark,
+  requiredMarkStyle,
+  requiredMarkPosition,
+  validateMessages,
+  validateTrigger,
+  onValuesChange,
+  errorStyle,
+  labelStyle,
   ...props
-}: PropsWithChildren<
-  Omit<TForm<T>, 'style'> & {scrollViewProps?: ScrollViewProps}
->) => {
+}: PropsWithChildren<Omit<TForm<T>, 'style'> & ScrollViewProps>) => {
   const refScroll = useRef<ScrollViewLibray>(null);
 
   const scrollTo = useCallback((y: number) => {
@@ -54,8 +65,24 @@ const ScrollView = <T,>({
   }, []);
 
   return (
-    <ScrollViewLibray {...scrollViewProps} ref={refScroll}>
-      <FormProvider {...props} scrollTo={scrollTo} />
+    <ScrollViewLibray {...props} ref={refScroll}>
+      <FormProvider
+        form={form}
+        colon={colon}
+        initialValues={initialValues}
+        labelAlign={labelAlign}
+        name={name}
+        preserve={preserve}
+        requiredMark={requiredMark}
+        requiredMarkStyle={requiredMarkStyle}
+        requiredMarkPosition={requiredMarkPosition}
+        validateMessages={validateMessages}
+        validateTrigger={validateTrigger}
+        onValuesChange={onValuesChange}
+        errorStyle={errorStyle}
+        labelStyle={labelStyle}
+        scrollTo={scrollTo}
+      />
     </ScrollViewLibray>
   );
 };

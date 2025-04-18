@@ -24,6 +24,11 @@ type Form = {
 };
 ```
 
+
+```ts
+type Form.ScrollView = Form & ScrollViewProps;
+```
+
 ---
 
 - form `<FormInstance>` <a href="#forminstance">Click to here</a>

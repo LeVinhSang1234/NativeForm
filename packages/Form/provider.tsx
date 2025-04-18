@@ -207,7 +207,7 @@ export const FormProvider = ({
           if (_errors?.[name]) return name;
         }),
       );
-      if (scrollTo) {
+      if (scrollTo && errs.filter(Boolean)[0]) {
         const y = layout.current[errs.filter(Boolean)[0]]?.y;
         scrollTo?.(y);
       }

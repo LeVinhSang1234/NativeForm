@@ -23,7 +23,9 @@ const methods: (keyof FormInstance)[] = [
   'setFieldError',
 ];
 
-export const useForm = <T = any,>(initialValues: T): FormInstance<T> => {
+export const useForm = <T = any,>(
+  initialValues?: Partial<T>,
+): FormInstance<T> => {
   const form = methods.reduce((acc, method) => {
     // @ts-ignore
     acc[method] = () => null;

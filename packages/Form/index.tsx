@@ -23,20 +23,23 @@ const methods: (keyof FormInstance)[] = [
   'setFieldError',
 ];
 
-export const useForm = <T,>(): FormInstance<T> => {
+export const useForm = <T,>(initialValues: T): FormInstance<T> => {
   const form = methods.reduce((acc, method) => {
     // @ts-ignore
     acc[method] = () => null;
     return acc;
   }, {} as FormInstance<T>);
-
+  form.initialValues = initialValues;
   return form;
 };
 
 const Form = <T,>({style, ...props}: PropsWithChildren<TForm<T>>) => {
   return (
     <View style={[styles.root, style]}>
-      <FormProvider {...props} />
+      <FormProvider
+        {...props}
+        initialValues={props.initialValues ?? props.form?.initialValues}
+      />
     </View>
   );
 };
@@ -55,7 +58,11 @@ const ScrollView = <T,>({
 
   return (
     <ScrollViewLibray {...scrollViewProps} ref={refScroll}>
-      <FormProvider {...props} scrollTo={scrollTo} />
+      <FormProvider
+        {...props}
+        initialValues={props.initialValues ?? props.form?.initialValues}
+        scrollTo={scrollTo}
+      />
     </ScrollViewLibray>
   );
 };

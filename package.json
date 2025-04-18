@@ -7,8 +7,7 @@
   "types": "lib/index.d.ts",
   "author": "SangLv <lsang2884@gmail.com>",
   "homepage": "https://github.com/LeVinhSang1234/NativeForm.git",
-  "scripts": {
-  },
+  "scripts": {},
   "files": [
     "lib",
     "!**/__tests__",

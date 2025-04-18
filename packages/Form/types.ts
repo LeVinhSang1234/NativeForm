@@ -89,12 +89,13 @@ export declare type FormInstance<T = Record<string, any>> = {
   setFieldsValue: (values: {[key in keyof T]?: any}) => Promise<void>; //Set fields value(Will directly pass to form store. If you do not want to modify passed object, please clone first).
   validateFields: (names?: (keyof T)[]) => Promise<ValueValidateField<T>>; //Validate fields
   setFieldError: (name: keyof T, error?: string | false) => void;
+  initialValues?: T;
 };
 
 export type TForm<T = any> = {
   form: FormInstance<T>;
   colon?: boolean; //Configure the default value of colon for Form.Item. Indicates whether the colon after the label is displayed (only effective when prop layout is horizontal)
-  initialValues?: {[key: string]: any}; //default values
+  initialValues?: T; //default values
   labelAlign?: 'left' | 'right'; //The text align of label of all items
   name?: string; //Form name. Will be the prefix of Field id
   preserve?: boolean; //Keep field value even when field removed

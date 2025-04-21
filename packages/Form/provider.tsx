@@ -36,7 +36,7 @@ export type TFormContext<T> = {
 } & T;
 
 const FormContext = createContext<
-  TFormContext<Omit<TForm, 'form' | 'children'>>
+  TFormContext<Omit<TForm, 'form' | 'children' | 'style'>>
 >({
   setField: () => null,
   unmountField: () => null,

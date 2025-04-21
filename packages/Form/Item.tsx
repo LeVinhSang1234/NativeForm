@@ -22,6 +22,7 @@ const Item = ({
   validateTrigger,
   preserve: _preserve,
   initialValue,
+  style,
 }: FormItem) => {
   const {
     setField,
@@ -113,7 +114,7 @@ const Item = ({
 
   return (
     <View
-      style={styles.root}
+      style={[styles.root, style]}
       onLayout={({nativeEvent}) => setLayout(name, nativeEvent.layout)}>
       {label ? (
         <Text style={[styles.label, {textAlign: labelAlign}, labelStyle]}>

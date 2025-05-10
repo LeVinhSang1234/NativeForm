@@ -53,6 +53,45 @@ const FormContext = createContext<
 
 export const useFormContext = () => useContext(FormContext);
 
+function unflattenObject(obj: Record<string, any>) {
+  const result: any = {};
+  for (const flatKey in obj) {
+    const parts = flatKey
+      .split('.')
+      .map(k => (k.match(/^\d+$/) ? Number(k) : k));
+    let curr = result;
+    for (let i = 0; i < parts.length; i++) {
+      const key = parts[i];
+      if (i === parts.length - 1) {
+        curr[key] = obj[flatKey];
+      } else {
+        if (curr[key] === undefined) {
+          curr[key] = typeof parts[i + 1] === 'number' ? [] : {};
+        }
+        curr = curr[key];
+      }
+    }
+  }
+  return result;
+}
+
+function flattenObject(obj: any, prefix = '', res: Record<string, any> = {}) {
+  if (typeof obj !== 'object' || obj === null) {
+    res[prefix] = obj;
+    return res;
+  }
+  if (Array.isArray(obj)) {
+    obj.forEach((item, i) => {
+      flattenObject(item, prefix ? `${prefix}.${i}` : `${i}`, res);
+    });
+  } else {
+    Object.keys(obj).forEach(key => {
+      flattenObject(obj[key], prefix ? `${prefix}.${key}` : key, res);
+    });
+  }
+  return res;
+}
+
 export const FormProvider = ({
   children,
   form,
@@ -66,9 +105,10 @@ export const FormProvider = ({
   const fields = useRef<TField>({});
   const touched = useRef<{[key: string]: boolean}>({});
   const layout = useRef<{[key: string]: LayoutRectangle}>({});
+
   const values = useRef<{[key: string]: TItemValue}>(
-    Object.keys(initialValues).reduce((a, b) => {
-      a[b] = {value: initialValues[b]};
+    Object.keys(flattenObject(initialValues)).reduce((a, b) => {
+      a[b] = {value: flattenObject(initialValues)[b]};
       return a;
     }, {} as {[key: string]: TItemValue}),
   );
@@ -107,37 +147,80 @@ export const FormProvider = ({
   }, []);
 
   const getFieldError = useCallback((name: any) => {
-    return values.current[name]?.error;
+    if (values.current[name]?.error) return values.current[name]?.error;
+    const prefix = name + '.';
+    const errors: Record<string, string> = {};
+    Object.keys(values.current).forEach(key => {
+      if (key.startsWith(prefix) && values.current[key]?.error) {
+        errors[key] = values.current[key].error;
+      }
+    });
+    if (Object.keys(errors).length === 0) return undefined;
+    return errors;
   }, []);
 
   const getFieldsError = useCallback(
     async (
       names: any[] = Object.keys(fields),
     ): Promise<{[key: string]: string | undefined}> => {
-      return names?.reduce((a, b) => {
-        if (values.current[b]?.error) a[b] = values.current[b]?.error;
-        return a;
-      }, {} as {[key: string]: string | undefined});
+      const errors: {[key: string]: string | undefined} = {};
+      names.forEach(name => {
+        if (values.current[name]?.error) {
+          errors[name] = values.current[name]?.error;
+        }
+        const prefix = name + '.';
+        Object.keys(values.current).forEach(key => {
+          if (key.startsWith(prefix) && values.current[key]?.error) {
+            errors[key] = values.current[key].error;
+          }
+        });
+      });
+      return errors;
     },
     [],
   );
 
   const getFieldsValue = useCallback(
     (names?: any[], filter?: FilterGetValues) => {
-      let keys = names ?? Object.keys(fields);
+      let keys: string[];
+      if (!names) {
+        keys = Object.keys(fields);
+      } else {
+        keys = [];
+        names.forEach(name => {
+          if (values.current[name] !== undefined) keys.push(name);
+          Object.keys(values.current).forEach(key => {
+            if (key.startsWith(name + '.') && !keys.includes(key)) {
+              keys.push(key);
+            }
+          });
+        });
+      }
       if (typeof filter === 'function') {
         keys = keys.filter(e => filter(touched.current[e]));
       }
-      return keys?.reduce((a, b) => {
+      const flat: Record<string, any> = keys.reduce((a, b) => {
         a[b] = values.current[b]?.value;
         return a;
-      }, {} as {[key: string]: string | undefined});
+      }, {} as Record<string, any>);
+      return unflattenObject(flat);
     },
     [],
   );
 
   const getFieldValue = useCallback((name: any) => {
-    return values.current[name]?.value;
+    if (values.current[name]?.value !== undefined) {
+      return values.current[name]?.value;
+    }
+    const prefix = name + '.';
+    const flat: Record<string, any> = {};
+    Object.keys(values.current).forEach(key => {
+      if (key.startsWith(prefix)) {
+        flat[key] = values.current[key]?.value;
+      }
+    });
+    if (Object.keys(flat).length === 0) return undefined;
+    return unflattenObject(flat)[name];
   }, []);
 
   const setFieldError = useCallback((name: any, error?: string | false) => {
@@ -147,13 +230,27 @@ export const FormProvider = ({
 
   const isFieldsTouched = useCallback(
     (names: any[] = Object.keys(fields)): boolean => {
-      return names.every(n => touched.current[n]);
+      let allKeys: string[] = [];
+      names.forEach(name => {
+        if (touched.current[name] !== undefined) allKeys.push(name);
+        Object.keys(fields.current).forEach(key => {
+          if (key.startsWith(name + '.') && !allKeys.includes(key)) {
+            allKeys.push(key);
+          }
+        });
+      });
+      if (allKeys.length === 0) return false;
+      return allKeys.every(n => touched.current[n]);
     },
     [],
   );
 
   const isFieldTouched = useCallback((name: any): boolean => {
-    return touched.current[name];
+    if (touched.current[name]) return true;
+    const prefix = name + '.';
+    return Object.keys(fields.current)
+      .filter(e => e.startsWith(prefix))
+      .some(key => touched.current[key]);
   }, []);
 
   const resetFields = useCallback(
@@ -211,7 +308,7 @@ export const FormProvider = ({
         const y = layout.current[errs.filter(Boolean)[0]]?.y;
         scrollTo?.(y);
       }
-      return {values: _values, errors: _errors} as any;
+      return {values: unflattenObject(_values), errors: _errors} as any;
     },
     [scrollTo],
   );
@@ -271,7 +368,9 @@ export const useValues = () => useContext(ValuesContext);
 
 export const ValuesProvider = ({children}: PropsWithChildren) => {
   const {initialValues = {}} = useFormContext();
-  const [values, setValues] = useState<Record<string, any>>(initialValues);
+  const [values, setValues] = useState<Record<string, any>>(
+    flattenObject(initialValues),
+  );
 
   const onChangeValue = useCallback((name: string, value: any) => {
     setValues(pre => ({...pre, [name]: value}));

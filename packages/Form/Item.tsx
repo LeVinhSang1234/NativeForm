@@ -12,7 +12,7 @@ import {validate} from './validateItem';
 import {StyleSheet, Text as TextLibrary, View} from 'react-native';
 import TextError from './TextError';
 
-const Item = ({
+const Item = <T = any, K extends keyof T = keyof T>({
   children,
   name,
   getValueProps = v => v,
@@ -23,7 +23,7 @@ const Item = ({
   preserve: _preserve,
   initialValue,
   style,
-}: FormItem) => {
+}: FormItem<T, K>) => {
   const {
     setField,
     unmountField,
@@ -55,7 +55,7 @@ const Item = ({
   );
 
   const [_value, _setValue] = useState<TItemValue>({
-    value: initialValue ?? values[name]?.value,
+    value: initialValue ?? values[name as string]?.value,
   });
 
   useEffect(() => {
@@ -67,8 +67,8 @@ const Item = ({
   }, [name, props, setField, unmountField]);
 
   useEffect(() => {
-    if (values[name]?.value === _value.value) return;
-    _setValue({value: values[name]?.value});
+    if (values[name as string]?.value === _value.value) return;
+    _setValue({value: values[name as string]?.value});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name, values]);
 
@@ -82,9 +82,9 @@ const Item = ({
   );
 
   useEffect(() => {
-    const {value, error} = values[name] || {};
+    const {value, error} = values[name as string] || {};
     if (value === _value.value && error === _value.error) return;
-    setValue(name, _value);
+    setValue(name as string, _value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [_value, name]);
 
@@ -115,7 +115,9 @@ const Item = ({
   return (
     <View
       style={[styles.root, style]}
-      onLayout={({nativeEvent}) => setLayout(name, nativeEvent.layout)}>
+      onLayout={({nativeEvent}) =>
+        setLayout(name as string, nativeEvent.layout)
+      }>
       {label ? (
         <Text style={[styles.label, {textAlign: labelAlign}, labelStyle]}>
           {pos === 'before' && _required && mark ? (
@@ -140,4 +142,4 @@ const styles = StyleSheet.create({
   mark: {color: '#ff0000', fontSize: 14},
 });
 
-export default memo(Item);
+export default memo(Item) as unknown as typeof Item;

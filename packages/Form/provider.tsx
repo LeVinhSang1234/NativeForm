@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -106,9 +107,14 @@ export const FormProvider = ({
   const touched = useRef<{[key: string]: boolean}>({});
   const layout = useRef<{[key: string]: LayoutRectangle}>({});
 
+  const _values = useMemo(
+    () => ({...initialValues, ...flattenObject(initialValues)}),
+    [initialValues],
+  );
+
   const values = useRef<{[key: string]: TItemValue}>(
-    Object.keys(flattenObject(initialValues)).reduce((a, b) => {
-      a[b] = {value: flattenObject(initialValues)[b]};
+    Object.keys(_values).reduce((a, b) => {
+      a[b] = {value: _values[b]};
       return a;
     }, {} as {[key: string]: TItemValue}),
   );
@@ -271,6 +277,7 @@ export const FormProvider = ({
     values.current[name] = {value};
   }, []);
 
+  // eslint-disable-next-line @typescript-eslint/no-shadow
   const setFieldsValue = useCallback(async (_values: {[key: string]: any}) => {
     await Promise.all(
       Object.keys(_values).map(async name => {
@@ -284,6 +291,7 @@ export const FormProvider = ({
 
   const validateFields = useCallback(
     async (names: any[] = Object.keys(fields.current)) => {
+      // eslint-disable-next-line @typescript-eslint/no-shadow
       const _values: {[key: string]: any} = {};
       let _errors: {[key: string]: string | undefined} | undefined;
       const errs = await Promise.all(

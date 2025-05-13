@@ -12,6 +12,18 @@ import {validate} from './validateItem';
 import {StyleSheet, Text as TextLibrary, View} from 'react-native';
 import TextError from './TextError';
 
+function getNestedValue(obj: Record<string, any>, path: string) {
+  return path.split('.').reduce((acc, key) => {
+    if (acc == null) return undefined;
+    // Nếu key là số, chuyển thành index mảng
+    const idx = Number(key);
+    if (!isNaN(idx) && Array.isArray(acc)) {
+      return acc[idx];
+    }
+    return acc[key];
+  }, obj);
+}
+
 const Item = <T = any, K extends keyof T = keyof T>({
   children,
   name,
@@ -27,7 +39,7 @@ const Item = <T = any, K extends keyof T = keyof T>({
   const {
     setField,
     unmountField,
-    values = {},
+    initialValues = {},
     setValue,
     errorStyle,
     labelAlign,
@@ -55,22 +67,27 @@ const Item = <T = any, K extends keyof T = keyof T>({
   );
 
   const [_value, _setValue] = useState<TItemValue>({
-    value: initialValue ?? values[name as string]?.value,
+    value: initialValue ?? getNestedValue(initialValues, name as string),
   });
 
   useEffect(() => {
     if (typeof name !== 'string') return;
-    setField(name, {...props, triggerState: _setValue});
+    setField(name, {...props, triggerState: _setValue}, _value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props, setField, unmountField]);
+
+  useEffect(() => {
+    if (typeof name !== 'string') return;
+    const nV = {
+      value: initialValue ?? getNestedValue(initialValues, name as string),
+    };
+    _setValue(nV);
+    setField(name, {...props, triggerState: _setValue}, nV);
     return () => {
       unmountField(name);
     };
-  }, [name, props, setField, unmountField]);
-
-  useEffect(() => {
-    if (values[name as string]?.value === _value.value) return;
-    _setValue({value: values[name as string]?.value});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, values]);
+  }, [name]);
 
   const onChangeValue = useCallback(
     async (v: any) => {
@@ -82,11 +99,8 @@ const Item = <T = any, K extends keyof T = keyof T>({
   );
 
   useEffect(() => {
-    const {value, error} = values[name as string] || {};
-    if (value === _value.value && error === _value.error) return;
     setValue(name as string, _value);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_value, name]);
+  }, [_value, name, setValue]);
 
   const onBlur = useCallback(async () => {
     const _error = await validate(_value.value, props, TriggerAction.onBlur);

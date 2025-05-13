@@ -5,7 +5,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -28,12 +27,13 @@ export type TFormContext<T> = {
     field: Omit<FormItem, 'name' | 'children'> & {
       triggerState: React.Dispatch<React.SetStateAction<TItemValue>>;
     },
+    value?: TItemValue
   ) => void;
   unmountField: (name: string) => void;
   fields: TField;
   setLayout: (name: string, rect: LayoutRectangle) => void;
   setValue: (name: string, value: any) => void;
-  values: Record<string, any>;
+  initialValues: Record<string, any>;
 } & T;
 
 const FormContext = createContext<
@@ -47,7 +47,7 @@ const FormContext = createContext<
   requiredMark: true,
   validateMessages: defaultValidateMessages,
   validateTrigger: TriggerAction.onChange,
-  values: {},
+  initialValues: {},
   setValue: () => null,
   setLayout: () => null,
 });
@@ -76,23 +76,6 @@ function unflattenObject(obj: Record<string, any>) {
   return result;
 }
 
-function flattenObject(obj: any, prefix = '', res: Record<string, any> = {}) {
-  if (typeof obj !== 'object' || obj === null) {
-    res[prefix] = obj;
-    return res;
-  }
-  if (Array.isArray(obj)) {
-    obj.forEach((item, i) => {
-      flattenObject(item, prefix ? `${prefix}.${i}` : `${i}`, res);
-    });
-  } else {
-    Object.keys(obj).forEach(key => {
-      flattenObject(obj[key], prefix ? `${prefix}.${key}` : key, res);
-    });
-  }
-  return res;
-}
-
 export const FormProvider = ({
   children,
   form,
@@ -107,25 +90,20 @@ export const FormProvider = ({
   const touched = useRef<{[key: string]: boolean}>({});
   const layout = useRef<{[key: string]: LayoutRectangle}>({});
 
-  const _values = useMemo(
-    () => ({...initialValues, ...flattenObject(initialValues)}),
-    [initialValues],
-  );
-
-  const values = useRef<{[key: string]: TItemValue}>(
-    Object.keys(_values).reduce((a, b) => {
-      a[b] = {value: _values[b]};
-      return a;
-    }, {} as {[key: string]: TItemValue}),
-  );
+  const values = useRef<{[key: string]: TItemValue}>({});
 
   const setField = useCallback(
-    (name: string, field: Omit<FormItem, 'name' | 'children'>) => {
+    (
+      name: string,
+      field: Omit<FormItem, 'name' | 'children'>,
+      value?: TItemValue,
+    ) => {
       if (fields.current[name]?.preserve && !field.preserve) {
         delete values.current?.[name];
         delete touched.current?.[name];
       }
       fields.current[name] = field;
+      if (value) values.current[name] = value;
     },
     [],
   );
@@ -277,7 +255,6 @@ export const FormProvider = ({
     values.current[name] = {value};
   }, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-shadow
   const setFieldsValue = useCallback(async (_values: {[key: string]: any}) => {
     await Promise.all(
       Object.keys(_values).map(async name => {
@@ -291,7 +268,6 @@ export const FormProvider = ({
 
   const validateFields = useCallback(
     async (names: any[] = Object.keys(fields.current)) => {
-      // eslint-disable-next-line @typescript-eslint/no-shadow
       const _values: {[key: string]: any} = {};
       let _errors: {[key: string]: string | undefined} | undefined;
       const errs = await Promise.all(
@@ -355,7 +331,7 @@ export const FormProvider = ({
         fields: fields.current,
         setField,
         unmountField,
-        values: values.current,
+        initialValues,
         setValue,
         setLayout,
       }}>
@@ -376,9 +352,7 @@ export const useValues = () => useContext(ValuesContext);
 
 export const ValuesProvider = ({children}: PropsWithChildren) => {
   const {initialValues = {}} = useFormContext();
-  const [values, setValues] = useState<Record<string, any>>(
-    flattenObject(initialValues),
-  );
+  const [values, setValues] = useState<Record<string, any>>(initialValues);
 
   const onChangeValue = useCallback((name: string, value: any) => {
     setValues(pre => ({...pre, [name]: value}));

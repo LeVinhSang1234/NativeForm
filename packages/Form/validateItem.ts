@@ -30,7 +30,9 @@ export const validate = async (
     !value &&
     [TriggerAction.all, validateTrigger].includes(trigger!)
   ) {
-    return [messages.required.replace('${name}', label || name || 'Field')];
+    return [
+      messages.required.replace('${name}', String(label || name || 'Field')),
+    ];
   }
   const errors: (string | undefined)[] = await Promise.all(
     (rules || []).map(async rule => {
@@ -51,7 +53,10 @@ export const validate = async (
         if (!newValue && newValue !== 0 && newValue !== false) {
           return (
             message ||
-            messages.required.replace('${name}', label || name || 'Field')
+            messages.required.replace(
+              '${name}',
+              String(label || name || 'Field'),
+            )
           );
         }
         return undefined;
@@ -63,7 +68,10 @@ export const validate = async (
       ) {
         return (
           message ||
-          messages.whitespace.replace('${name}', label || name || 'Field')
+          messages.whitespace.replace(
+            '${name}',
+            String(label || name || 'Field'),
+          )
         );
       }
       if (rule.enum && Array.isArray(rule.enum)) {
@@ -71,7 +79,7 @@ export const validate = async (
           return (
             message ||
             messages.enum
-              .replace('${name}', label || name || 'Field')
+              .replace('${name}', String(label || name || 'Field'))
               .replace('${enum}', `[${rule.enum.join(', ')}]`)
           );
         }
@@ -80,7 +88,7 @@ export const validate = async (
         return (
           message ||
           messages.len
-            .replace('$name', label || name || 'Field')
+            .replace('$name', String(label || name || 'Field'))
             .replace('${len}', String(rule.len))
         );
       }
@@ -92,7 +100,7 @@ export const validate = async (
         return (
           message ||
           messages.max
-            .replace('${name}', label || name || 'Field')
+            .replace('${name}', String(label || name || 'Field'))
             .replace('${max}', String(rule.max))
         );
       }
@@ -104,7 +112,7 @@ export const validate = async (
         return (
           message ||
           messages.min
-            .replace('${name}', label || name || 'Field')
+            .replace('${name}', String(label || name || 'Field'))
             .replace('${min}', String(rule.min))
         );
       }
@@ -116,7 +124,7 @@ export const validate = async (
         return (
           message ||
           messages.pattern
-            .replace('$name', label || name || 'Field')
+            .replace('$name', String(label || name || 'Field'))
             .replace('${pattern}', String(pattern))
         );
       }
@@ -124,13 +132,17 @@ export const validate = async (
         try {
           await new Promise((reslove, reject) => {
             rule
-              .validator?.({...rule, name}, newValue, (messageErr?: string) => {
-                if (messageErr) {
-                  reject(new Error(messageErr));
-                } else {
-                  reslove(undefined);
-                }
-              })
+              .validator?.(
+                {...rule, name: name as string},
+                newValue,
+                (messageErr?: string) => {
+                  if (messageErr) {
+                    reject(new Error(messageErr));
+                  } else {
+                    reslove(undefined);
+                  }
+                },
+              )
               ?.then?.(() => reslove(undefined))
               ?.catch?.(reject);
           });

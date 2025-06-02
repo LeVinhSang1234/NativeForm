@@ -27,7 +27,7 @@ export type TFormContext<T> = {
     field: Omit<FormItem, 'name' | 'children'> & {
       triggerState: React.Dispatch<React.SetStateAction<TItemValue>>;
     },
-    value?: TItemValue
+    value?: TItemValue,
   ) => void;
   unmountField: (name: string) => void;
   fields: TField;
@@ -136,7 +136,7 @@ export const FormProvider = ({
     const errors: Record<string, string> = {};
     Object.keys(values.current).forEach(key => {
       if (key.startsWith(prefix) && values.current[key]?.error) {
-        errors[key] = values.current[key].error;
+        errors[key] = values.current[key].error as string;
       }
     });
     if (Object.keys(errors).length === 0) return undefined;
@@ -145,7 +145,7 @@ export const FormProvider = ({
 
   const getFieldsError = useCallback(
     async (
-      names: any[] = Object.keys(fields),
+      names: any[] = Object.keys(fields.current),
     ): Promise<{[key: string]: string | undefined}> => {
       const errors: {[key: string]: string | undefined} = {};
       names.forEach(name => {
@@ -168,7 +168,7 @@ export const FormProvider = ({
     (names?: any[], filter?: FilterGetValues) => {
       let keys: string[];
       if (!names) {
-        keys = Object.keys(fields);
+        keys = Object.keys(fields.current);
       } else {
         keys = [];
         names.forEach(name => {
@@ -213,7 +213,7 @@ export const FormProvider = ({
   }, []);
 
   const isFieldsTouched = useCallback(
-    (names: any[] = Object.keys(fields)): boolean => {
+    (names: any[] = Object.keys(fields.current)): boolean => {
       let allKeys: string[] = [];
       names.forEach(name => {
         if (touched.current[name] !== undefined) allKeys.push(name);
@@ -238,7 +238,7 @@ export const FormProvider = ({
   }, []);
 
   const resetFields = useCallback(
-    async (names: any[] = Object.keys(fields)) => {
+    async (names: any[] = Object.keys(fields.current)) => {
       await Promise.all(
         names.map(async name => {
           values.current[name] = initialValues[name];

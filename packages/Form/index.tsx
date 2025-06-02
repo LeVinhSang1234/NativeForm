@@ -1,4 +1,4 @@
-import {PropsWithChildren, useCallback, useRef} from 'react';
+import React, {forwardRef, useCallback, useRef, PropsWithChildren} from 'react';
 import {FormInstance, TForm} from './types';
 import {FormProvider} from './provider';
 import Item from './Item';
@@ -23,9 +23,7 @@ const methods: (keyof FormInstance)[] = [
   'setFieldError',
 ];
 
-export const useForm = <T = any,>(
-  initialValues?: Partial<T>,
-): FormInstance<T> => {
+export const useForm = <T,>(initialValues?: Partial<T>): FormInstance<T> => {
   const form = methods.reduce((acc, method) => {
     // @ts-ignore
     acc[method] = () => null;
@@ -46,53 +44,66 @@ const Form = <T,>({style, ...props}: PropsWithChildren<TForm<T>>) => {
   );
 };
 
-const ScrollView = <T,>({
-  form,
-  colon,
-  initialValues,
-  labelAlign,
-  name,
-  preserve,
-  requiredMark,
-  requiredMarkStyle,
-  requiredMarkPosition,
-  validateMessages,
-  validateTrigger,
-  onValuesChange,
-  errorStyle,
-  labelStyle,
-  children,
-  ...props
-}: PropsWithChildren<Omit<TForm<T>, 'style'> & ScrollViewProps>) => {
-  const refScroll = useRef<ScrollViewLibray>(null);
+const ScrollView = forwardRef<
+  ScrollViewLibray,
+  PropsWithChildren<Omit<TForm<any>, 'style'> & ScrollViewProps>
+>(
+  (
+    {
+      form,
+      colon,
+      initialValues,
+      labelAlign,
+      name,
+      preserve,
+      requiredMark,
+      requiredMarkStyle,
+      requiredMarkPosition,
+      validateMessages,
+      validateTrigger,
+      onValuesChange,
+      errorStyle,
+      labelStyle,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
+    const innerRef = useRef<ScrollViewLibray>(null);
+    React.useImperativeHandle(
+      ref,
+      () => innerRef.current as ScrollViewLibray,
+      [],
+    );
 
-  const scrollTo = useCallback((y: number) => {
-    refScroll.current?.scrollTo?.({animated: true, y});
-  }, []);
+    const scrollTo = useCallback((y: number) => {
+      innerRef.current?.scrollTo?.({animated: true, y});
+    }, []);
 
-  return (
-    <ScrollViewLibray {...props} ref={refScroll}>
-      <FormProvider
-        form={form}
-        colon={colon}
-        initialValues={initialValues ?? form.initialValues}
-        labelAlign={labelAlign}
-        name={name}
-        preserve={preserve}
-        requiredMark={requiredMark}
-        requiredMarkStyle={requiredMarkStyle}
-        requiredMarkPosition={requiredMarkPosition}
-        validateMessages={validateMessages}
-        validateTrigger={validateTrigger}
-        onValuesChange={onValuesChange}
-        errorStyle={errorStyle}
-        labelStyle={labelStyle}
-        scrollTo={scrollTo}>
-        {children}
-      </FormProvider>
-    </ScrollViewLibray>
-  );
-};
+    return (
+      <ScrollViewLibray {...props} ref={innerRef}>
+        <FormProvider
+          form={form}
+          colon={colon}
+          initialValues={initialValues ?? form.initialValues}
+          labelAlign={labelAlign}
+          name={name}
+          preserve={preserve}
+          requiredMark={requiredMark}
+          requiredMarkStyle={requiredMarkStyle}
+          requiredMarkPosition={requiredMarkPosition}
+          validateMessages={validateMessages}
+          validateTrigger={validateTrigger}
+          onValuesChange={onValuesChange}
+          errorStyle={errorStyle}
+          labelStyle={labelStyle}
+          scrollTo={scrollTo}>
+          {children}
+        </FormProvider>
+      </ScrollViewLibray>
+    );
+  },
+);
 
 Form.Item = Item;
 

@@ -35,6 +35,9 @@ const Item = <T = any, K extends keyof T = keyof T>({
   preserve: _preserve,
   initialValue,
   style,
+  errorStyle: _errorStyle,
+  labelStyle: _labelStyle,
+  messageError,
 }: FormItem<T, K>) => {
   const {
     setField,
@@ -62,8 +65,9 @@ const Item = <T = any, K extends keyof T = keyof T>({
       label,
       validateTrigger,
       preserve: _preserve ?? preserve,
+      messageError,
     }),
-    [rules, required, name, label, validateTrigger, _preserve, preserve],
+    [rules, required, name, label, validateTrigger, _preserve, preserve, messageError],
   );
 
   const [_value, _setValue] = useState<TItemValue>({
@@ -133,7 +137,13 @@ const Item = <T = any, K extends keyof T = keyof T>({
         setLayout(name as string, nativeEvent.layout)
       }>
       {label ? (
-        <Text style={[styles.label, {textAlign: labelAlign}, labelStyle]}>
+        <Text
+          style={[
+            styles.label,
+            {textAlign: labelAlign},
+            labelStyle,
+            _labelStyle,
+          ]}>
           {pos === 'before' && _required && mark ? (
             <Text style={[styles.mark, requiredMarkStyle]}>{`${mark} `}</Text>
           ) : null}
@@ -145,7 +155,7 @@ const Item = <T = any, K extends keyof T = keyof T>({
         </Text>
       ) : null}
       {_children}
-      <TextError error={_value.error} errorStyle={errorStyle} />
+      <TextError error={_value.error} errorStyle={[errorStyle, _errorStyle]} />
     </View>
   );
 };

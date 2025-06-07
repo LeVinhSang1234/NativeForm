@@ -9,7 +9,7 @@ export const validate = async (
   value: any,
   props: Pick<
     FormItem,
-    'rules' | 'required' | 'name' | 'label' | 'validateTrigger'
+    'rules' | 'required' | 'name' | 'label' | 'validateTrigger' | 'messageError'
   >,
   trigger: TriggerAction = TriggerAction.onChange,
   validateMessages?: ValidateMessages,
@@ -21,6 +21,7 @@ export const validate = async (
     name,
     label,
     validateTrigger = TriggerAction.onChange,
+    messageError,
   } = props;
   if (!rules?.length && !required) {
     return undefined;
@@ -31,7 +32,8 @@ export const validate = async (
     [TriggerAction.all, validateTrigger].includes(trigger!)
   ) {
     return [
-      messages.required.replace('${name}', String(label || name || 'Field')),
+      messageError ??
+        messages.required.replace('${name}', String(label || name || 'Field')),
     ];
   }
   const errors: (string | undefined)[] = await Promise.all(

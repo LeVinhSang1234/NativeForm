@@ -91,6 +91,7 @@ export const FormProvider = ({
   const layout = useRef<{[key: string]: LayoutRectangle}>({});
 
   const values = useRef<{[key: string]: TItemValue}>({});
+  const timeout = useRef<number>(undefined);
 
   const setField = useCallback(
     (
@@ -117,7 +118,10 @@ export const FormProvider = ({
       if (!values.current) values.current = {};
       values.current[name] = value;
       if (!touched.current[name]) touched.current[name] = true;
-      if (touched.current[name]) onValuesChange?.(values.current);
+      if (timeout.current) clearTimeout(timeout.current);
+      timeout.current = setTimeout(() => {
+        if (touched.current[name]) onValuesChange?.(values.current);
+      }, 150);
     },
     [onValuesChange],
   );

@@ -29,6 +29,8 @@ export const validate = async (
   if (
     required &&
     !value &&
+    value !== 0 &&
+    value !== false &&
     [TriggerAction.all, validateTrigger].includes(trigger!)
   ) {
     return [

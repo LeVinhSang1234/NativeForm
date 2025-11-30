@@ -91,6 +91,7 @@ export declare type FormInstance<T = Record<string, any>> = {
   getFieldValue: (name: NamePath<T>) => any; //Get the value by the field name
   isFieldsTouched: (names?: string[]) => boolean; //Check if fields have been operated. Check if all fields is touched
   isFieldTouched: (name: NamePath<T>) => boolean; //Check if a field has been operated
+  isValuesChanged: (names?: NamePath<T>[]) => boolean; //Check if values changed compared to initialValues
   resetFields: (fields?: NamePath<T>[]) => Promise<void>; //Reset fields to initialValues
   setFieldValue: (name: keyof T, value: any) => void; //Set fields value(Will directly pass to form store. If you do not want to modify passed object, please clone first)
   setFieldsValue: (values: {[key in NamePath<T>]?: any}) => Promise<void>; //Set fields value(Will directly pass to form store. If you do not want to modify passed object, please clone first).

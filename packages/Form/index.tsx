@@ -16,6 +16,7 @@ const methods: (keyof FormInstance)[] = [
   'getFieldValue',
   'isFieldsTouched',
   'isFieldTouched',
+  'isValuesChanged',
   'resetFields',
   'setFieldValue',
   'setFieldsValue',

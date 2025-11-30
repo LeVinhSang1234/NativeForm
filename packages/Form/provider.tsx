@@ -6,7 +6,6 @@ import {
   useContext,
   useEffect,
   useRef,
-  useState,
 } from 'react';
 import {
   defaultValidateMessages,
@@ -54,27 +53,40 @@ const FormContext = createContext<
 
 export const useFormContext = () => useContext(FormContext);
 
-function unflattenObject(obj: Record<string, any>) {
-  const result: any = {};
-  for (const flatKey in obj) {
+const toNestedObject = (flat: Record<string, any>) => {
+  const result: Record<string, any> = {};
+  Object.keys(flat).forEach(flatKey => {
     const parts = flatKey
       .split('.')
       .map(k => (k.match(/^\d+$/) ? Number(k) : k));
-    let curr = result;
-    for (let i = 0; i < parts.length; i++) {
-      const key = parts[i];
-      if (i === parts.length - 1) {
-        curr[key] = obj[flatKey];
-      } else {
-        if (curr[key] === undefined) {
-          curr[key] = typeof parts[i + 1] === 'number' ? [] : {};
-        }
-        curr = curr[key];
+    let cursor: any = result;
+    parts.forEach((key, idx) => {
+      const isLeaf = idx === parts.length - 1;
+      if (isLeaf) {
+        cursor[key] = flat[flatKey];
+        return;
       }
-    }
-  }
+      if (cursor[key] === undefined) {
+        cursor[key] = typeof parts[idx + 1] === 'number' ? [] : {};
+      }
+      cursor = cursor[key];
+    });
+  });
   return result;
-}
+};
+
+const getInitialValueByPath = (
+  source: Record<string, any>,
+  path: string,
+): any =>
+  path.split('.').reduce((acc: any, key) => {
+    if (acc == null) return undefined;
+    const idx = Number(key);
+    if (!Number.isNaN(idx) && Array.isArray(acc)) {
+      return acc[idx];
+    }
+    return acc[key];
+  }, source);
 
 export const FormProvider = ({
   children,
@@ -87,11 +99,25 @@ export const FormProvider = ({
   TForm & {form: FormInstance<any>; scrollTo?: (y: number) => void}
 >) => {
   const fields = useRef<TField>({});
-  const touched = useRef<{[key: string]: boolean}>({});
-  const layout = useRef<{[key: string]: LayoutRectangle}>({});
+  const touched = useRef<Record<string, boolean>>({});
+  const layout = useRef<Record<string, LayoutRectangle>>({});
+  const values = useRef<Record<string, TItemValue>>({});
+  const changeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const values = useRef<{[key: string]: TItemValue}>({});
-  const timeout = useRef<number>(undefined);
+  const setValue = useCallback(
+    (name: string, value: TItemValue) => {
+      const prevValue = values.current[name]?.value;
+      const hasValueChanged = prevValue !== value?.value;
+      values.current[name] = value;
+      if (!touched.current[name]) touched.current[name] = true;
+      if (!hasValueChanged) return;
+      if (changeTimeout.current) clearTimeout(changeTimeout.current);
+      changeTimeout.current = setTimeout(() => {
+        if (touched.current[name]) onValuesChange?.(values.current);
+      }, 150);
+    },
+    [onValuesChange],
+  );
 
   const setField = useCallback(
     (
@@ -104,7 +130,7 @@ export const FormProvider = ({
         delete touched.current?.[name];
       }
       fields.current[name] = field;
-      if (value) values.current[name] = value;
+      if (value !== undefined) values.current[name] = value;
     },
     [],
   );
@@ -112,19 +138,6 @@ export const FormProvider = ({
   const setLayout = useCallback((name: string, rect: LayoutRectangle) => {
     layout.current[name] = rect;
   }, []);
-
-  const setValue = useCallback(
-    (name: string, value: any) => {
-      if (!values.current) values.current = {};
-      values.current[name] = value;
-      if (!touched.current[name]) touched.current[name] = true;
-      if (timeout.current) clearTimeout(timeout.current);
-      timeout.current = setTimeout(() => {
-        if (touched.current[name]) onValuesChange?.(values.current);
-      }, 150);
-    },
-    [onValuesChange],
-  );
 
   const unmountField = useCallback((name: string) => {
     delete layout.current[name];
@@ -135,16 +148,18 @@ export const FormProvider = ({
   }, []);
 
   const getFieldError = useCallback((name: any) => {
-    if (values.current[name]?.error) return values.current[name]?.error;
-    const prefix = name + '.';
+    if (values.current[name]?.error) {
+      return values.current[name]?.error;
+    }
+    const prefix = `${name}.`;
     const errors: Record<string, string> = {};
     Object.keys(values.current).forEach(key => {
-      if (key.startsWith(prefix) && values.current[key]?.error) {
-        errors[key] = values.current[key].error as string;
+      const itemError = values.current[key]?.error;
+      if (key.startsWith(prefix) && itemError) {
+        errors[key] = itemError as string;
       }
     });
-    if (Object.keys(errors).length === 0) return undefined;
-    return errors;
+    return Object.keys(errors).length === 0 ? undefined : errors;
   }, []);
 
   const getFieldsError = useCallback(
@@ -153,13 +168,13 @@ export const FormProvider = ({
     ): Promise<{[key: string]: string | undefined}> => {
       const errors: {[key: string]: string | undefined} = {};
       names.forEach(name => {
-        if (values.current[name]?.error) {
-          errors[name] = values.current[name]?.error;
-        }
-        const prefix = name + '.';
+        const currentError = values.current[name]?.error;
+        if (currentError) errors[name] = currentError;
+        const prefix = `${name}.`;
         Object.keys(values.current).forEach(key => {
-          if (key.startsWith(prefix) && values.current[key]?.error) {
-            errors[key] = values.current[key].error;
+          const itemError = values.current[key]?.error;
+          if (key.startsWith(prefix) && itemError) {
+            errors[key] = itemError;
           }
         });
       });
@@ -169,14 +184,16 @@ export const FormProvider = ({
   );
 
   const getFieldsValue = useCallback(
-    (names?: any[], filter?: FilterGetValues) => {
+    async (names?: any[], filter?: FilterGetValues) => {
       let keys: string[];
       if (!names) {
         keys = Object.keys(fields.current);
       } else {
         keys = [];
         names.forEach(name => {
-          if (values.current[name] !== undefined) keys.push(name);
+          if (values.current[name] !== undefined) {
+            keys.push(name);
+          }
           Object.keys(values.current).forEach(key => {
             if (key.startsWith(name + '.') && !keys.includes(key)) {
               keys.push(key);
@@ -191,7 +208,7 @@ export const FormProvider = ({
         a[b] = values.current[b]?.value;
         return a;
       }, {} as Record<string, any>);
-      return unflattenObject(flat);
+      return toNestedObject(flat);
     },
     [],
   );
@@ -200,7 +217,7 @@ export const FormProvider = ({
     if (values.current[name]?.value !== undefined) {
       return values.current[name]?.value;
     }
-    const prefix = name + '.';
+    const prefix = `${name}.`;
     const flat: Record<string, any> = {};
     Object.keys(values.current).forEach(key => {
       if (key.startsWith(prefix)) {
@@ -208,7 +225,7 @@ export const FormProvider = ({
       }
     });
     if (Object.keys(flat).length === 0) return undefined;
-    return unflattenObject(flat)[name];
+    return toNestedObject(flat)[name];
   }, []);
 
   const setFieldError = useCallback((name: any, error?: string | false) => {
@@ -241,11 +258,23 @@ export const FormProvider = ({
       .some(key => touched.current[key]);
   }, []);
 
+  const isValuesChanged = useCallback(
+    (names: any[] = Object.keys(fields.current)) => {
+      return names.some(name => {
+        const currentValue = values.current[name]?.value;
+        const initialValue = getInitialValueByPath(initialValues, name);
+        return currentValue !== initialValue;
+      });
+    },
+    [initialValues],
+  );
+
   const resetFields = useCallback(
     async (names: any[] = Object.keys(fields.current)) => {
       await Promise.all(
         names.map(async name => {
           values.current[name] = initialValues[name];
+          if (touched.current[name]) delete touched.current[name];
           return fields.current[name]?.triggerState?.({
             value: initialValues[name],
           });
@@ -296,7 +325,7 @@ export const FormProvider = ({
         const y = layout.current[errs.filter(Boolean)[0]]?.y;
         scrollTo?.(y);
       }
-      return {values: unflattenObject(_values), errors: _errors} as any;
+      return {values: toNestedObject(_values), errors: _errors} as any;
     },
     [scrollTo],
   );
@@ -308,6 +337,7 @@ export const FormProvider = ({
     form.getFieldValue = getFieldValue;
     form.isFieldsTouched = isFieldsTouched;
     form.isFieldTouched = isFieldTouched;
+    form.isValuesChanged = isValuesChanged;
     form.resetFields = resetFields;
     form.setFieldValue = setFieldValue;
     form.setFieldsValue = setFieldsValue;
@@ -321,6 +351,7 @@ export const FormProvider = ({
     getFieldsValue,
     isFieldTouched,
     isFieldsTouched,
+    isValuesChanged,
     resetFields,
     setFieldError,
     setFieldValue,
@@ -341,31 +372,6 @@ export const FormProvider = ({
       }}>
       {children}
     </FormContext.Provider>
-  );
-};
-
-const ValuesContext = createContext<{
-  values: Record<string, any>;
-  onChangeValue: (name: string, value: any) => void;
-}>({
-  values: {},
-  onChangeValue: () => null,
-});
-
-export const useValues = () => useContext(ValuesContext);
-
-export const ValuesProvider = ({children}: PropsWithChildren) => {
-  const {initialValues = {}} = useFormContext();
-  const [values, setValues] = useState<Record<string, any>>(initialValues);
-
-  const onChangeValue = useCallback((name: string, value: any) => {
-    setValues(pre => ({...pre, [name]: value}));
-  }, []);
-
-  return (
-    <ValuesContext.Provider value={{values, onChangeValue}}>
-      {children}
-    </ValuesContext.Provider>
   );
 };
 

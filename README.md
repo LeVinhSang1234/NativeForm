@@ -386,6 +386,13 @@ Check if all fields is touched when allTouched is true
 Check if a field has been operated
 ```
 
+- isValuesChanged `(names?: string[]) => boolean`
+
+```
+Check whether current values differ from initialValues.
+Pass field names to limit the comparison.
+```
+
 - resetFields `(fields?: string[]) => Promise<void>`
 
 ```

@@ -6,7 +6,6 @@ import {
   useContext,
   useEffect,
   useRef,
-  useState,
 } from 'react';
 import {
   defaultValidateMessages,
@@ -17,9 +16,10 @@ import {
   FormInstance,
   FilterGetValues,
   TItemValue,
+  ValidateMessages,
 } from './types';
 import {validate} from './validateItem';
-import {LayoutRectangle} from 'react-native';
+import {LayoutRectangle, StyleProp, TextStyle} from 'react-native';
 
 export type TFormContext<T> = {
   setField: (
@@ -27,16 +27,17 @@ export type TFormContext<T> = {
     field: Omit<FormItem, 'name' | 'children'> & {
       triggerState: React.Dispatch<React.SetStateAction<TItemValue>>;
     },
+    value?: TItemValue,
   ) => void;
   unmountField: (name: string) => void;
   fields: TField;
   setLayout: (name: string, rect: LayoutRectangle) => void;
   setValue: (name: string, value: any) => void;
-  values: Record<string, any>;
+  initialValues: Record<string, any>;
 } & T;
 
 const FormContext = createContext<
-  TFormContext<Omit<TForm, 'form' | 'children'>>
+  TFormContext<Omit<TForm, 'form' | 'children' | 'style'>>
 >({
   setField: () => null,
   unmountField: () => null,
@@ -46,12 +47,47 @@ const FormContext = createContext<
   requiredMark: true,
   validateMessages: defaultValidateMessages,
   validateTrigger: TriggerAction.onChange,
-  values: {},
+  initialValues: {},
   setValue: () => null,
   setLayout: () => null,
 });
 
 export const useFormContext = () => useContext(FormContext);
+
+const toNestedObject = (flat: Record<string, any>) => {
+  const result: Record<string, any> = {};
+  Object.keys(flat).forEach(flatKey => {
+    const parts = flatKey
+      .split('.')
+      .map(k => (k.match(/^\d+$/) ? Number(k) : k));
+    let cursor: any = result;
+    parts.forEach((key, idx) => {
+      const isLeaf = idx === parts.length - 1;
+      if (isLeaf) {
+        cursor[key] = flat[flatKey];
+        return;
+      }
+      if (cursor[key] === undefined) {
+        cursor[key] = typeof parts[idx + 1] === 'number' ? [] : {};
+      }
+      cursor = cursor[key];
+    });
+  });
+  return result;
+};
+
+const getInitialValueByPath = (
+  source: Record<string, any>,
+  path: string,
+): any =>
+  path.split('.').reduce((acc: any, key) => {
+    if (acc == null) return undefined;
+    const idx = Number(key);
+    if (!Number.isNaN(idx) && Array.isArray(acc)) {
+      return acc[idx];
+    }
+    return acc[key];
+  }, source);
 
 export const FormProvider = ({
   children,
@@ -64,22 +100,38 @@ export const FormProvider = ({
   TForm & {form: FormInstance<any>; scrollTo?: (y: number) => void}
 >) => {
   const fields = useRef<TField>({});
-  const touched = useRef<{[key: string]: boolean}>({});
-  const layout = useRef<{[key: string]: LayoutRectangle}>({});
-  const values = useRef<{[key: string]: TItemValue}>(
-    Object.keys(initialValues).reduce((a, b) => {
-      a[b] = {value: initialValues[b]};
-      return a;
-    }, {} as {[key: string]: TItemValue}),
+  const touched = useRef<Record<string, boolean>>({});
+  const layout = useRef<Record<string, LayoutRectangle>>({});
+  const values = useRef<Record<string, TItemValue>>({});
+  const changeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const setValue = useCallback(
+    (name: string, value: TItemValue) => {
+      const prevValue = values.current[name]?.value;
+      const hasValueChanged = prevValue !== value?.value;
+      values.current[name] = value;
+      if (!touched.current[name]) touched.current[name] = true;
+      if (!hasValueChanged) return;
+      if (changeTimeout.current) clearTimeout(changeTimeout.current);
+      changeTimeout.current = setTimeout(() => {
+        if (touched.current[name]) onValuesChange?.(values.current);
+      }, 150);
+    },
+    [onValuesChange],
   );
 
   const setField = useCallback(
-    (name: string, field: Omit<FormItem, 'name' | 'children'>) => {
+    (
+      name: string,
+      field: Omit<FormItem, 'name' | 'children'>,
+      value?: TItemValue,
+    ) => {
       if (fields.current[name]?.preserve && !field.preserve) {
         delete values.current?.[name];
         delete touched.current?.[name];
       }
       fields.current[name] = field;
+      if (value !== undefined) values.current[name] = value;
     },
     [],
   );
@@ -87,16 +139,6 @@ export const FormProvider = ({
   const setLayout = useCallback((name: string, rect: LayoutRectangle) => {
     layout.current[name] = rect;
   }, []);
-
-  const setValue = useCallback(
-    (name: string, value: any) => {
-      if (!values.current) values.current = {};
-      values.current[name] = value;
-      if (!touched.current[name]) touched.current[name] = true;
-      if (touched.current[name]) onValuesChange?.(values.current);
-    },
-    [onValuesChange],
-  );
 
   const unmountField = useCallback((name: string) => {
     delete layout.current[name];
@@ -107,37 +149,84 @@ export const FormProvider = ({
   }, []);
 
   const getFieldError = useCallback((name: any) => {
-    return values.current[name]?.error;
+    if (values.current[name]?.error) {
+      return values.current[name]?.error;
+    }
+    const prefix = `${name}.`;
+    const errors: Record<string, string> = {};
+    Object.keys(values.current).forEach(key => {
+      const itemError = values.current[key]?.error;
+      if (key.startsWith(prefix) && itemError) {
+        errors[key] = itemError as string;
+      }
+    });
+    return Object.keys(errors).length === 0 ? undefined : errors;
   }, []);
 
   const getFieldsError = useCallback(
     async (
-      names: any[] = Object.keys(fields),
+      names: any[] = Object.keys(fields.current),
     ): Promise<{[key: string]: string | undefined}> => {
-      return names?.reduce((a, b) => {
-        if (values.current[b]?.error) a[b] = values.current[b]?.error;
-        return a;
-      }, {} as {[key: string]: string | undefined});
+      const errors: {[key: string]: string | undefined} = {};
+      names.forEach(name => {
+        const currentError = values.current[name]?.error;
+        if (currentError) errors[name] = currentError;
+        const prefix = `${name}.`;
+        Object.keys(values.current).forEach(key => {
+          const itemError = values.current[key]?.error;
+          if (key.startsWith(prefix) && itemError) {
+            errors[key] = itemError;
+          }
+        });
+      });
+      return errors;
     },
     [],
   );
 
   const getFieldsValue = useCallback(
-    (names?: any[], filter?: FilterGetValues) => {
-      let keys = names ?? Object.keys(fields);
+    async (names?: any[], filter?: FilterGetValues) => {
+      let keys: string[];
+      if (!names) {
+        keys = Object.keys(fields.current);
+      } else {
+        keys = [];
+        names.forEach(name => {
+          if (values.current[name] !== undefined) {
+            keys.push(name);
+          }
+          Object.keys(values.current).forEach(key => {
+            if (key.startsWith(name + '.') && !keys.includes(key)) {
+              keys.push(key);
+            }
+          });
+        });
+      }
       if (typeof filter === 'function') {
         keys = keys.filter(e => filter(touched.current[e]));
       }
-      return keys?.reduce((a, b) => {
+      const flat: Record<string, any> = keys.reduce((a, b) => {
         a[b] = values.current[b]?.value;
         return a;
-      }, {} as {[key: string]: string | undefined});
+      }, {} as Record<string, any>);
+      return toNestedObject(flat);
     },
     [],
   );
 
   const getFieldValue = useCallback((name: any) => {
-    return values.current[name]?.value;
+    if (values.current[name]?.value !== undefined) {
+      return values.current[name]?.value;
+    }
+    const prefix = `${name}.`;
+    const flat: Record<string, any> = {};
+    Object.keys(values.current).forEach(key => {
+      if (key.startsWith(prefix)) {
+        flat[key] = values.current[key]?.value;
+      }
+    });
+    if (Object.keys(flat).length === 0) return undefined;
+    return toNestedObject(flat)[name];
   }, []);
 
   const setFieldError = useCallback((name: any, error?: string | false) => {
@@ -146,21 +235,47 @@ export const FormProvider = ({
   }, []);
 
   const isFieldsTouched = useCallback(
-    (names: any[] = Object.keys(fields)): boolean => {
-      return names.every(n => touched.current[n]);
+    (names: any[] = Object.keys(fields.current)): boolean => {
+      let allKeys: string[] = [];
+      names.forEach(name => {
+        if (touched.current[name] !== undefined) allKeys.push(name);
+        Object.keys(fields.current).forEach(key => {
+          if (key.startsWith(name + '.') && !allKeys.includes(key)) {
+            allKeys.push(key);
+          }
+        });
+      });
+      if (allKeys.length === 0) return false;
+      return allKeys.every(n => touched.current[n]);
     },
     [],
   );
 
   const isFieldTouched = useCallback((name: any): boolean => {
-    return touched.current[name];
+    if (touched.current[name]) return true;
+    const prefix = name + '.';
+    return Object.keys(fields.current)
+      .filter(e => e.startsWith(prefix))
+      .some(key => touched.current[key]);
   }, []);
 
+  const isValuesChanged = useCallback(
+    (names: any[] = Object.keys(fields.current)) => {
+      return names.some(name => {
+        const currentValue = values.current[name]?.value;
+        const initialValue = getInitialValueByPath(initialValues, name);
+        return currentValue !== initialValue;
+      });
+    },
+    [initialValues],
+  );
+
   const resetFields = useCallback(
-    async (names: any[] = Object.keys(fields)) => {
+    async (names: any[] = Object.keys(fields.current)) => {
       await Promise.all(
         names.map(async name => {
           values.current[name] = initialValues[name];
+          if (touched.current[name]) delete touched.current[name];
           return fields.current[name]?.triggerState?.({
             value: initialValues[name],
           });
@@ -211,7 +326,7 @@ export const FormProvider = ({
         const y = layout.current[errs.filter(Boolean)[0]]?.y;
         scrollTo?.(y);
       }
-      return {values: _values, errors: _errors} as any;
+      return {values: toNestedObject(_values), errors: _errors} as any;
     },
     [scrollTo],
   );
@@ -223,6 +338,7 @@ export const FormProvider = ({
     form.getFieldValue = getFieldValue;
     form.isFieldsTouched = isFieldsTouched;
     form.isFieldTouched = isFieldTouched;
+    form.isValuesChanged = isValuesChanged;
     form.resetFields = resetFields;
     form.setFieldValue = setFieldValue;
     form.setFieldsValue = setFieldsValue;
@@ -236,6 +352,7 @@ export const FormProvider = ({
     getFieldsValue,
     isFieldTouched,
     isFieldsTouched,
+    isValuesChanged,
     resetFields,
     setFieldError,
     setFieldValue,
@@ -250,7 +367,7 @@ export const FormProvider = ({
         fields: fields.current,
         setField,
         unmountField,
-        values: values.current,
+        initialValues,
         setValue,
         setLayout,
       }}>
@@ -259,35 +376,16 @@ export const FormProvider = ({
   );
 };
 
-const ValuesContext = createContext<{
-  values: Record<string, any>;
-  onChangeValue: (name: string, value: any) => void;
-}>({
-  values: {},
-  onChangeValue: () => null,
-});
-
-export const useValues = () => useContext(ValuesContext);
-
-export const ValuesProvider = ({children}: PropsWithChildren) => {
-  const {initialValues = {}} = useFormContext();
-  const [values, setValues] = useState<Record<string, any>>(initialValues);
-
-  const onChangeValue = useCallback((name: string, value: any) => {
-    setValues(pre => ({...pre, [name]: value}));
-  }, []);
-
-  return (
-    <ValuesContext.Provider value={{values, onChangeValue}}>
-      {children}
-    </ValuesContext.Provider>
-  );
-};
-
 type GlobalContext = {
   Text?:
     | ((v: any) => React.JSX.Element)
     | MemoExoticComponent<(v: any) => React.JSX.Element>;
+  errorStyle?: StyleProp<TextStyle>;
+  labelStyle?: StyleProp<TextStyle>;
+  requiredMark?: boolean | string; //Required mark style. Can use required mark or optional mark. You can not config to single Form.Item since this is a Form level config
+  requiredMarkStyle?: StyleProp<TextStyle>;
+  requiredMarkPosition?: 'before' | 'after';
+  validateMessages?: ValidateMessages; //Validation prompt template
 };
 
 export const FormContextGlobal = createContext<GlobalContext>({});
@@ -296,10 +394,10 @@ export const useFormContextGlobal = () => useContext(FormContextGlobal);
 
 export const FormGlobalProvider = ({
   children,
-  Text,
+  ...p
 }: PropsWithChildren<GlobalContext>) => {
   return (
-    <FormContextGlobal.Provider value={{Text}}>
+    <FormContextGlobal.Provider value={p}>
       {children}
     </FormContextGlobal.Provider>
   );

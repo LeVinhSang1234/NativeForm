@@ -2,8 +2,13 @@ import React from 'react';
 import {Button, SafeAreaView} from 'react-native';
 import Form, {Input, useForm} from './packages';
 
+type TValue = {
+  example: string;
+  example1: {name: string}[];
+};
+
 const App = () => {
-  const form = useForm<any>();
+  const form = useForm<TValue>();
 
   return (
     <SafeAreaView>
@@ -11,14 +16,21 @@ const App = () => {
         form={form}
         onValuesChange={values => {
           console.log(values);
-        }}>
+        }}
+        initialValues={{example1: [{name: 'hello'}], example: '12121'}}>
         <Form.Item name="example" label="Example" required>
+          <Input placeholder="2" />
+        </Form.Item>
+        <Form.Item name="example1.0.name" label="Example" required>
+          <Input placeholder="2" />
+        </Form.Item>
+        <Form.Item name="example1.1.name" label="Example" required>
           <Input placeholder="2" />
         </Form.Item>
         <Button
           title="Get Value"
           onPress={async () => {
-            const error = await form.getFieldError('example');
+            const error = await form.getFieldError('example1');
             console.log(error);
             // const errors = await form.getFieldsError();
             // const errorsWithNames = await form.getFieldsError(['example']);
@@ -29,9 +41,7 @@ const App = () => {
             // const isToucheds = await form.isFieldsTouched();
             // const isTouched = await form.isFieldTouched('example');
             const data = await form.validateFields();
-            if (Array.isArray(data)) {
-              console.log('data is array', data);
-            } else console.log(data);
+            console.log(data);
           }}
         />
       </Form.ScrollView>

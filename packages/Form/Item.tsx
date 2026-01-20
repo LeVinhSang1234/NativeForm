@@ -12,7 +12,19 @@ import {validate} from './validateItem';
 import {StyleSheet, Text as TextLibrary, View} from 'react-native';
 import TextError from './TextError';
 
-const Item = ({
+function getNestedValue(obj: Record<string, any>, path: string) {
+  return path.split('.').reduce((acc, key) => {
+    if (acc == null) return undefined;
+    // Nếu key là số, chuyển thành index mảng
+    const idx = Number(key);
+    if (!isNaN(idx) && Array.isArray(acc)) {
+      return acc[idx];
+    }
+    return acc[key];
+  }, obj);
+}
+
+const Item = <T = any, K extends keyof T = keyof T>({
   children,
   name,
   getValueProps = v => v,
@@ -22,11 +34,15 @@ const Item = ({
   validateTrigger,
   preserve: _preserve,
   initialValue,
-}: FormItem) => {
+  style,
+  errorStyle: _errorStyle,
+  labelStyle: _labelStyle,
+  messageError,
+}: FormItem<T, K>) => {
   const {
     setField,
     unmountField,
-    values = {},
+    initialValues = {},
     setValue,
     errorStyle,
     labelAlign,
@@ -49,27 +65,33 @@ const Item = ({
       label,
       validateTrigger,
       preserve: _preserve ?? preserve,
+      messageError,
     }),
-    [rules, required, name, label, validateTrigger, _preserve, preserve],
+    [rules, required, name, label, validateTrigger, _preserve, preserve, messageError],
   );
 
   const [_value, _setValue] = useState<TItemValue>({
-    value: initialValue ?? values[name]?.value,
+    value: initialValue ?? getNestedValue(initialValues, name as string),
   });
 
   useEffect(() => {
     if (typeof name !== 'string') return;
-    setField(name, {...props, triggerState: _setValue});
+    setField(name, {...props, triggerState: _setValue}, _value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props, setField, unmountField]);
+
+  useEffect(() => {
+    if (typeof name !== 'string') return;
+    const nV = {
+      value: initialValue ?? getNestedValue(initialValues, name as string),
+    };
+    _setValue(nV);
+    setField(name, {...props, triggerState: _setValue}, nV);
     return () => {
       unmountField(name);
     };
-  }, [name, props, setField, unmountField]);
-
-  useEffect(() => {
-    if (values[name]?.value === _value.value) return;
-    _setValue({value: values[name]?.value});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, values]);
+  }, [name]);
 
   const onChangeValue = useCallback(
     async (v: any) => {
@@ -81,11 +103,8 @@ const Item = ({
   );
 
   useEffect(() => {
-    const {value, error} = values[name] || {};
-    if (value === _value.value && error === _value.error) return;
-    setValue(name, _value);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [_value, name]);
+    setValue(name as string, _value);
+  }, [_value, name, setValue]);
 
   const onBlur = useCallback(async () => {
     const _error = await validate(_value.value, props, TriggerAction.onBlur);
@@ -113,10 +132,18 @@ const Item = ({
 
   return (
     <View
-      style={styles.root}
-      onLayout={({nativeEvent}) => setLayout(name, nativeEvent.layout)}>
+      style={[styles.root, style]}
+      onLayout={({nativeEvent}) =>
+        setLayout(name as string, nativeEvent.layout)
+      }>
       {label ? (
-        <Text style={[styles.label, {textAlign: labelAlign}, labelStyle]}>
+        <Text
+          style={[
+            styles.label,
+            {textAlign: labelAlign},
+            labelStyle,
+            _labelStyle,
+          ]}>
           {pos === 'before' && _required && mark ? (
             <Text style={[styles.mark, requiredMarkStyle]}>{`${mark} `}</Text>
           ) : null}
@@ -128,7 +155,7 @@ const Item = ({
         </Text>
       ) : null}
       {_children}
-      <TextError error={_value.error} errorStyle={errorStyle} />
+      <TextError error={_value.error} errorStyle={[errorStyle, _errorStyle]} />
     </View>
   );
 };
@@ -139,4 +166,4 @@ const styles = StyleSheet.create({
   mark: {color: '#ff0000', fontSize: 14},
 });
 
-export default memo(Item);
+export default memo(Item) as unknown as typeof Item;

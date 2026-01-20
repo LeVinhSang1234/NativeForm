@@ -71,32 +71,18 @@ const Input = ({
 
   const handleFocus = useCallback(
     (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
-      if (!error) {
-        Animated.timing(animatedInput.current, {
-          toValue: 1,
-          duration: 100,
-          useNativeDriver: false,
-        }).start();
-      }
       onFocus?.(e);
       setIsFocus(true);
     },
-    [error, onFocus],
+    [onFocus],
   );
 
   const handleBlur = useCallback(
     (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
-      if (!error) {
-        Animated.timing(animatedInput.current, {
-          toValue: 0,
-          duration: 100,
-          useNativeDriver: false,
-        }).start();
-      }
       onBlur?.(e);
       setIsFocus(false);
     },
-    [error, onBlur],
+    [onBlur],
   );
 
   const borderColor = animatedInput.current.interpolate({

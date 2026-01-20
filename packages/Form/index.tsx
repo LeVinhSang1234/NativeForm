@@ -1,6 +1,6 @@
-import {PropsWithChildren, useCallback, useRef} from 'react';
+import React, {forwardRef, useCallback, useRef, PropsWithChildren} from 'react';
 import {FormInstance, TForm} from './types';
-import {FormProvider} from './provider';
+import {FormProvider, useFormContextGlobal} from './provider';
 import Item from './Item';
 import {
   ScrollViewProps,
@@ -16,6 +16,7 @@ const methods: (keyof FormInstance)[] = [
   'getFieldValue',
   'isFieldsTouched',
   'isFieldTouched',
+  'isValuesChanged',
   'resetFields',
   'setFieldValue',
   'setFieldsValue',
@@ -23,69 +24,101 @@ const methods: (keyof FormInstance)[] = [
   'setFieldError',
 ];
 
-export const useForm = <T = any,>(): FormInstance<T> => {
+export const useForm = <T,>(initialValues?: Partial<T>): FormInstance<T> => {
   const form = methods.reduce((acc, method) => {
     // @ts-ignore
     acc[method] = () => null;
     return acc;
   }, {} as FormInstance<T>);
-
+  form.initialValues = initialValues;
   return form;
 };
 
 const Form = <T,>({style, ...props}: PropsWithChildren<TForm<T>>) => {
+  const {
+    requiredMark,
+    requiredMarkPosition,
+    requiredMarkStyle,
+    errorStyle,
+    labelStyle,
+    validateMessages,
+  } = useFormContextGlobal();
   return (
     <View style={[styles.root, style]}>
-      <FormProvider {...props} />
+      <FormProvider
+        requiredMark={requiredMark}
+        requiredMarkPosition={requiredMarkPosition}
+        requiredMarkStyle={requiredMarkStyle}
+        errorStyle={errorStyle}
+        labelStyle={labelStyle}
+        validateMessages={validateMessages}
+        {...props}
+        initialValues={props.initialValues ?? props.form?.initialValues}
+      />
     </View>
   );
 };
 
-const ScrollView = <T,>({
-  form,
-  colon,
-  initialValues,
-  labelAlign,
-  name,
-  preserve,
-  requiredMark,
-  requiredMarkStyle,
-  requiredMarkPosition,
-  validateMessages,
-  validateTrigger,
-  onValuesChange,
-  errorStyle,
-  labelStyle,
-  ...props
-}: PropsWithChildren<Omit<TForm<T>, 'style'> & ScrollViewProps>) => {
-  const refScroll = useRef<ScrollViewLibray>(null);
+const ScrollView = forwardRef<
+  ScrollViewLibray,
+  PropsWithChildren<Omit<TForm<any>, 'style'> & ScrollViewProps>
+>(
+  (
+    {
+      form,
+      colon,
+      initialValues,
+      labelAlign,
+      name,
+      preserve,
+      requiredMark,
+      requiredMarkStyle,
+      requiredMarkPosition,
+      validateMessages,
+      validateTrigger,
+      onValuesChange,
+      errorStyle,
+      labelStyle,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
+    const innerRef = useRef<ScrollViewLibray>(null);
+    React.useImperativeHandle(
+      ref,
+      () => innerRef.current as ScrollViewLibray,
+      [],
+    );
 
-  const scrollTo = useCallback((y: number) => {
-    refScroll.current?.scrollTo?.({animated: true, y});
-  }, []);
+    const scrollTo = useCallback((y: number) => {
+      innerRef.current?.scrollTo?.({animated: true, y});
+    }, []);
 
-  return (
-    <ScrollViewLibray {...props} ref={refScroll}>
-      <FormProvider
-        form={form}
-        colon={colon}
-        initialValues={initialValues}
-        labelAlign={labelAlign}
-        name={name}
-        preserve={preserve}
-        requiredMark={requiredMark}
-        requiredMarkStyle={requiredMarkStyle}
-        requiredMarkPosition={requiredMarkPosition}
-        validateMessages={validateMessages}
-        validateTrigger={validateTrigger}
-        onValuesChange={onValuesChange}
-        errorStyle={errorStyle}
-        labelStyle={labelStyle}
-        scrollTo={scrollTo}
-      />
-    </ScrollViewLibray>
-  );
-};
+    return (
+      <ScrollViewLibray {...props} ref={innerRef}>
+        <FormProvider
+          form={form}
+          colon={colon}
+          initialValues={initialValues ?? form.initialValues}
+          labelAlign={labelAlign}
+          name={name}
+          preserve={preserve}
+          requiredMark={requiredMark}
+          requiredMarkStyle={requiredMarkStyle}
+          requiredMarkPosition={requiredMarkPosition}
+          validateMessages={validateMessages}
+          validateTrigger={validateTrigger}
+          onValuesChange={onValuesChange}
+          errorStyle={errorStyle}
+          labelStyle={labelStyle}
+          scrollTo={scrollTo}>
+          {children}
+        </FormProvider>
+      </ScrollViewLibray>
+    );
+  },
+);
 
 Form.Item = Item;
 

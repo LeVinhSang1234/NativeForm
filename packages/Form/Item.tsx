@@ -55,6 +55,8 @@ const Item = <T = any, K extends keyof T = keyof T>({
     setLayout,
   } = useFormContext();
 
+  const {validateMessages} = useFormContext();
+
   const {Text = TextLibrary} = useFormContextGlobal();
 
   const props = useMemo(
@@ -67,7 +69,16 @@ const Item = <T = any, K extends keyof T = keyof T>({
       preserve: _preserve ?? preserve,
       messageError,
     }),
-    [rules, required, name, label, validateTrigger, _preserve, preserve, messageError],
+    [
+      rules,
+      required,
+      name,
+      label,
+      validateTrigger,
+      _preserve,
+      preserve,
+      messageError,
+    ],
   );
 
   const [_value, _setValue] = useState<TItemValue>({
@@ -96,10 +107,15 @@ const Item = <T = any, K extends keyof T = keyof T>({
   const onChangeValue = useCallback(
     async (v: any) => {
       _setValue(pre => ({...pre, value: getValueProps(v)}));
-      const _error = await validate(v, props, TriggerAction.onChange);
+      const _error = await validate(
+        v,
+        props,
+        TriggerAction.onChange,
+        validateMessages,
+      );
       _setValue({value: getValueProps(v), error: _error?.[0] as string});
     },
-    [props, getValueProps],
+    [props, validateMessages, getValueProps],
   );
 
   useEffect(() => {
@@ -107,10 +123,15 @@ const Item = <T = any, K extends keyof T = keyof T>({
   }, [_value, name, setValue]);
 
   const onBlur = useCallback(async () => {
-    const _error = await validate(_value.value, props, TriggerAction.onBlur);
+    const _error = await validate(
+      _value.value,
+      props,
+      TriggerAction.onBlur,
+      validateMessages,
+    );
     if (!_error) return;
     _setValue(pre => ({...pre, error: _error?.[0] as string}));
-  }, [_value.value, props]);
+  }, [_value.value, props, validateMessages]);
 
   const _required = useMemo(() => {
     return required || rules?.some(e => e.required);

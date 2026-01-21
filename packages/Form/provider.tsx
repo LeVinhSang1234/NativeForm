@@ -311,6 +311,7 @@ export const FormProvider = ({
             values.current[name]?.value,
             {...field, name},
             TriggerAction.all,
+            p.validateMessages,
           );
           _values[name] = values.current[name]?.value;
           if (error?.[0]) {
@@ -328,7 +329,7 @@ export const FormProvider = ({
       }
       return {values: toNestedObject(_values), errors: _errors} as any;
     },
-    [scrollTo],
+    [p.validateMessages, scrollTo],
   );
 
   useEffect(() => {

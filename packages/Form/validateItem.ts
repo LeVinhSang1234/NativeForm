@@ -63,7 +63,6 @@ export const validate = async (
             )
           );
         }
-        return undefined;
       }
       if (
         rule.whitespace &&

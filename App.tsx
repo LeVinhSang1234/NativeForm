@@ -18,7 +18,10 @@ const App = () => {
           console.log(values);
         }}
         initialValues={{example1: [{name: 'hello'}], example: '12121'}}>
-        <Form.Item name="example" label="Example" required>
+        <Form.Item
+          name="example"
+          label="Example"
+          rules={[{required: true, whitespace: true}]}>
           <Input placeholder="2" />
         </Form.Item>
         <Form.Item name="example1.0.name" label="Example" required>

@@ -91,6 +91,15 @@ const ScrollView = forwardRef<
       [],
     );
 
+    const {
+      requiredMark: _requiredMark,
+      requiredMarkPosition: _requiredMarkPosition,
+      requiredMarkStyle: _requiredMarkStyle,
+      errorStyle: _errorStyle,
+      labelStyle: _labelStyle,
+      validateMessages: _validateMessages,
+    } = useFormContextGlobal();
+
     const scrollTo = useCallback((y: number) => {
       innerRef.current?.scrollTo?.({animated: true, y});
     }, []);
@@ -104,14 +113,14 @@ const ScrollView = forwardRef<
           labelAlign={labelAlign}
           name={name}
           preserve={preserve}
-          requiredMark={requiredMark}
-          requiredMarkStyle={requiredMarkStyle}
-          requiredMarkPosition={requiredMarkPosition}
-          validateMessages={validateMessages}
+          requiredMark={requiredMark ?? _requiredMark}
+          requiredMarkStyle={requiredMarkStyle ?? _requiredMarkStyle}
+          requiredMarkPosition={requiredMarkPosition ?? _requiredMarkPosition}
+          validateMessages={validateMessages ?? _validateMessages}
           validateTrigger={validateTrigger}
           onValuesChange={onValuesChange}
-          errorStyle={errorStyle}
-          labelStyle={labelStyle}
+          errorStyle={errorStyle ?? _errorStyle}
+          labelStyle={labelStyle ?? _labelStyle}
           scrollTo={scrollTo}>
           {children}
         </FormProvider>

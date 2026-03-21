@@ -53,9 +53,8 @@ const Item = <T = any, K extends keyof T = keyof T>({
     colon,
     preserve,
     setLayout,
+    validateMessages,
   } = useFormContext();
-
-  const {validateMessages} = useFormContext();
 
   const {Text = TextLibrary} = useFormContextGlobal();
 

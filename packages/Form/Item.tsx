@@ -82,7 +82,9 @@ const Item = <T = any, K extends keyof T = keyof T>({
   );
 
   const [_value, _setValue] = useState<TItemValue>({
-    value: initialValue ?? getNestedValue(initialValues, name as string),
+    value: getValueProps(
+      initialValue ?? (getNestedValue(initialValues, name as string) as any),
+    ),
   });
 
   useEffect(() => {
@@ -94,7 +96,9 @@ const Item = <T = any, K extends keyof T = keyof T>({
   useEffect(() => {
     if (typeof name !== 'string') return;
     const nV = {
-      value: initialValue ?? getNestedValue(initialValues, name as string),
+      value: getValueProps(
+        initialValue ?? (getNestedValue(initialValues, name as string) as any),
+      ),
     };
     _setValue(nV);
     setField(name, {...props, triggerState: _setValue}, nV);

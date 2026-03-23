@@ -6,7 +6,7 @@ import {
   ScrollViewProps,
   StyleSheet,
   View,
-  ScrollView as ScrollViewLibray,
+  ScrollView as ScrollViewLibrary,
 } from 'react-native';
 
 const methods: (keyof FormInstance)[] = [
@@ -25,13 +25,16 @@ const methods: (keyof FormInstance)[] = [
 ];
 
 export const useForm = <T,>(initialValues?: Partial<T>): FormInstance<T> => {
-  const form = methods.reduce((acc, method) => {
-    // @ts-ignore
-    acc[method] = () => null;
-    return acc;
-  }, {} as FormInstance<T>);
-  form.initialValues = initialValues;
-  return form;
+  const formRef = useRef<FormInstance<T> | null>(null);
+  if (!formRef.current) {
+    formRef.current = methods.reduce((acc, method) => {
+      // @ts-ignore
+      acc[method] = () => null;
+      return acc;
+    }, {} as FormInstance<T>);
+    formRef.current.initialValues = initialValues;
+  }
+  return formRef.current;
 };
 
 const Form = <T,>({style, ...props}: PropsWithChildren<TForm<T>>) => {
@@ -60,7 +63,7 @@ const Form = <T,>({style, ...props}: PropsWithChildren<TForm<T>>) => {
 };
 
 const ScrollView = forwardRef<
-  ScrollViewLibray,
+  ScrollViewLibrary,
   PropsWithChildren<Omit<TForm<any>, 'style'> & ScrollViewProps>
 >(
   (
@@ -80,14 +83,15 @@ const ScrollView = forwardRef<
       errorStyle,
       labelStyle,
       children,
+      onFormDispose,
       ...props
     },
     ref,
   ) => {
-    const innerRef = useRef<ScrollViewLibray>(null);
+    const innerRef = useRef<ScrollViewLibrary>(null);
     React.useImperativeHandle(
       ref,
-      () => innerRef.current as ScrollViewLibray,
+      () => innerRef.current as ScrollViewLibrary,
       [],
     );
 
@@ -105,8 +109,9 @@ const ScrollView = forwardRef<
     }, []);
 
     return (
-      <ScrollViewLibray {...props} ref={innerRef}>
+      <ScrollViewLibrary {...props} ref={innerRef}>
         <FormProvider
+          onFormDispose={onFormDispose}
           form={form}
           colon={colon}
           initialValues={initialValues ?? form.initialValues}
@@ -124,7 +129,7 @@ const ScrollView = forwardRef<
           scrollTo={scrollTo}>
           {children}
         </FormProvider>
-      </ScrollViewLibray>
+      </ScrollViewLibrary>
     );
   },
 );

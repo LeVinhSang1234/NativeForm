@@ -4,41 +4,33 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {FormItem, TItemValue, TriggerAction} from './types';
-import {useFormContext, useFormContextGlobal} from './provider';
+import {getNestedValue, useFormContext, useFormContextGlobal} from './provider';
 import {validate} from './validateItem';
 import {StyleSheet, Text as TextLibrary, View} from 'react-native';
 import TextError from './TextError';
 
-function getNestedValue(obj: Record<string, any>, path: string) {
-  return path.split('.').reduce((acc, key) => {
-    if (acc == null) return undefined;
-    // Nếu key là số, chuyển thành index mảng
-    const idx = Number(key);
-    if (!isNaN(idx) && Array.isArray(acc)) {
-      return acc[idx];
-    }
-    return acc[key];
-  }, obj);
-}
+const defaultGetValueProps = (v: any) => v;
 
 const Item = <T = any, K extends keyof T = keyof T>({
   children,
   name,
-  getValueProps = v => v,
+  getValueProps: getValuePropsProp,
   required,
   label,
   rules,
   validateTrigger,
-  preserve: _preserve,
+  preserve: itemPreserve,
   initialValue,
   style,
-  errorStyle: _errorStyle,
-  labelStyle: _labelStyle,
+  errorStyle: itemErrorStyle,
+  labelStyle: itemLabelStyle,
   messageError,
 }: FormItem<T, K>) => {
+  const getValueProps = getValuePropsProp ?? defaultGetValueProps;
   const {
     setField,
     unmountField,
@@ -47,7 +39,7 @@ const Item = <T = any, K extends keyof T = keyof T>({
     errorStyle,
     labelAlign,
     labelStyle,
-    requiredMarkPosition: pos = 'after',
+    requiredMarkPosition = 'after',
     requiredMark = true,
     requiredMarkStyle,
     colon,
@@ -58,6 +50,8 @@ const Item = <T = any, K extends keyof T = keyof T>({
 
   const {Text = TextLibrary} = useFormContextGlobal();
 
+  const nameStr = name as string;
+
   const props = useMemo(
     () => ({
       rules,
@@ -65,121 +59,122 @@ const Item = <T = any, K extends keyof T = keyof T>({
       name,
       label,
       validateTrigger,
-      preserve: _preserve ?? preserve,
+      preserve: itemPreserve ?? preserve,
       messageError,
     }),
-    [
-      rules,
-      required,
-      name,
-      label,
-      validateTrigger,
-      _preserve,
-      preserve,
-      messageError,
-    ],
+    [rules, required, name, label, validateTrigger, itemPreserve, preserve, messageError],
   );
 
-  const [_value, _setValue] = useState<TItemValue>({
-    value: getValueProps(
-      initialValue ?? (getNestedValue(initialValues, name as string) as any),
-    ),
+  const getInitial = useCallback(
+    () =>
+      getValueProps(
+        initialValue ?? (getNestedValue(initialValues, nameStr) as any),
+      ),
+    [getValueProps, initialValue, initialValues, nameStr],
+  );
+
+  const [itemValue, setItemValue] = useState<TItemValue>({
+    value: getInitial(),
   });
 
   useEffect(() => {
     if (typeof name !== 'string') return;
-    setField(name, {...props, triggerState: _setValue}, _value);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props, setField, unmountField]);
+    setField(name, {...props, triggerState: setItemValue}, itemValue);
+  }, [itemValue, name, props, setField]);
 
+  const mountedRef = useRef(false);
   useEffect(() => {
     if (typeof name !== 'string') return;
-    const nV = {
-      value: getValueProps(
-        initialValue ?? (getNestedValue(initialValues, name as string) as any),
-      ),
-    };
-    _setValue(nV);
-    setField(name, {...props, triggerState: _setValue}, nV);
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      return;
+    }
+    const newValue = {value: getInitial()};
+    setItemValue(newValue);
+    setField(name, {...props, triggerState: setItemValue}, newValue);
+  }, [getInitial, name, props, setField]);
+
+  useEffect(() => {
     return () => {
-      unmountField(name);
+      unmountField(nameStr);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name]);
+  }, [nameStr, unmountField]);
 
   const onChangeValue = useCallback(
     async (v: any) => {
-      _setValue(pre => ({...pre, value: getValueProps(v)}));
-      const _error = await validate(
+      setItemValue(prev => ({...prev, value: getValueProps(v)}));
+      const errors = await validate(
         v,
         props,
         TriggerAction.onChange,
         validateMessages,
       );
-      _setValue({value: getValueProps(v), error: _error?.[0] as string});
+      setItemValue(prev => ({
+        ...prev,
+        value: getValueProps(v),
+        error: errors?.[0] as string,
+      }));
     },
     [props, validateMessages, getValueProps],
   );
 
   useEffect(() => {
-    setValue(name as string, _value);
-  }, [_value, name, setValue]);
+    setValue(nameStr, itemValue);
+  }, [itemValue, nameStr, setValue]);
 
   const onBlur = useCallback(async () => {
-    const _error = await validate(
-      _value.value,
+    const errors = await validate(
+      itemValue.value,
       props,
       TriggerAction.onBlur,
       validateMessages,
     );
-    if (!_error) return;
-    _setValue(pre => ({...pre, error: _error?.[0] as string}));
-  }, [_value.value, props, validateMessages]);
+    if (!errors) return;
+    setItemValue(prev => ({...prev, error: errors?.[0] as string}));
+  }, [itemValue.value, props, validateMessages]);
 
-  const _required = useMemo(() => {
-    return required || rules?.some(e => e.required);
+  const isRequired = useMemo(() => {
+    return required || rules?.some(rule => rule.required);
   }, [required, rules]);
 
   const mark = useMemo(() => {
-    if (requiredMark === undefined || requiredMark === true) {
-      return '*';
-    }
-    return requiredMark;
+    return requiredMark === true ? '*' : requiredMark;
   }, [requiredMark]);
 
-  const _children = useMemo(() => {
+  const renderedChildren = useMemo(() => {
     if (typeof children === 'function') {
-      return children({onChangeValue, onBlur, ..._value});
+      return children({onChangeValue, onBlur, ...itemValue});
     }
-    return cloneElement(children as any, {..._value, onChangeValue, onBlur});
-  }, [_value, children, onBlur, onChangeValue]);
+    return cloneElement(children as any, {...itemValue, onChangeValue, onBlur});
+  }, [itemValue, children, onBlur, onChangeValue]);
 
   return (
     <View
       style={[styles.root, style]}
-      onLayout={({nativeEvent}) =>
-        setLayout(name as string, nativeEvent.layout)
-      }>
+      onLayout={({nativeEvent}) => setLayout(nameStr, nativeEvent.layout)}>
       {label ? (
         <Text
           style={[
             styles.label,
             {textAlign: labelAlign},
             labelStyle,
-            _labelStyle,
+            itemLabelStyle,
           ]}>
-          {pos === 'before' && _required && mark ? (
+          {requiredMarkPosition === 'before' && isRequired && mark ? (
             <Text style={[styles.mark, requiredMarkStyle]}>{`${mark} `}</Text>
           ) : null}
           {label}
-          {pos === 'after' && _required && mark ? (
+          {requiredMarkPosition === 'after' && isRequired && mark ? (
             <Text style={[styles.mark, requiredMarkStyle]}>{` ${mark}`}</Text>
           ) : null}
           {colon ?? ''}
         </Text>
       ) : null}
-      {_children}
-      <TextError error={_value.error} errorStyle={[errorStyle, _errorStyle]} />
+      {renderedChildren}
+      <TextError
+        error={itemValue.error}
+        errorStyle={[errorStyle, itemErrorStyle]}
+      />
     </View>
   );
 };

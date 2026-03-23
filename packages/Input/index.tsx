@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   Animated,
   Appearance,
@@ -85,10 +85,26 @@ const Input = ({
     [onBlur],
   );
 
-  const borderColor = animatedInput.current.interpolate({
-    inputRange: [0, 1, 2],
-    outputRange: [borderColorProps, activeBorderColor, rangeBorderColor],
-  });
+  const borderColor = useMemo(
+    () =>
+      animatedInput.current.interpolate({
+        inputRange: [0, 1, 2],
+        outputRange: [borderColorProps, activeBorderColor, rangeBorderColor],
+      }),
+    [borderColorProps, activeBorderColor, rangeBorderColor],
+  );
+
+  const handlePress = useCallback(() => {
+    textInputRef.current?.focus();
+  }, []);
+
+  const handleChangeText = useCallback(
+    (t: string) => {
+      onChangeValue?.(t);
+      onChangeText?.(t);
+    },
+    [onChangeValue, onChangeText],
+  );
 
   const color = scheme === 'dark' ? '#ffffff' : '#000000';
   const paddingTop = multiline ? 6 : 11;
@@ -96,9 +112,7 @@ const Input = ({
   return (
     <PressAnimated
       style={[styles.input, {borderColor}, {paddingTop}, style]}
-      onPress={() => {
-        textInputRef.current?.focus();
-      }}>
+      onPress={handlePress}>
       <TextInput
         ref={textInputRef}
         textAlignVertical="center"
@@ -106,10 +120,7 @@ const Input = ({
         multiline={multiline}
         style={[{color}, styleInput]}
         onChange={onChange}
-        onChangeText={t => {
-          onChangeValue?.(t);
-          onChangeText?.(t);
-        }}
+        onChangeText={handleChangeText}
         onBlur={handleBlur}
         onFocus={handleFocus}>
         {value}

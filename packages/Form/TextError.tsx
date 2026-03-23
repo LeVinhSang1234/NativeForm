@@ -1,9 +1,9 @@
-import React, {memo, useEffect, useRef} from 'react';
+import {memo, useEffect, useMemo, useRef} from 'react';
 import {
   Animated,
   StyleProp,
   StyleSheet,
-  Text as TextLibary,
+  Text as TextLibrary,
   TextStyle,
 } from 'react-native';
 import {useFormContextGlobal} from './provider';
@@ -15,8 +15,8 @@ interface TextErrorProps {
 
 const TextError = ({error, errorStyle}: TextErrorProps) => {
   const animated = useRef(new Animated.Value(0));
-  const {Text = TextLibary} = useFormContextGlobal();
-  const TextAnimated = useRef(Animated.createAnimatedComponent(Text)).current;
+  const {Text = TextLibrary} = useFormContextGlobal();
+  const TextAnimated = useMemo(() => Animated.createAnimatedComponent(Text), [Text]);
 
   useEffect(() => {
     if (!error) return animated.current.setValue(0);
@@ -27,10 +27,14 @@ const TextError = ({error, errorStyle}: TextErrorProps) => {
     }).start();
   }, [error]);
 
-  const translateY = animated.current.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-22, 0],
-  });
+  const translateY = useMemo(
+    () =>
+      animated.current.interpolate({
+        inputRange: [0, 1],
+        outputRange: [-22, 0],
+      }),
+    [],
+  );
 
   return (
     <TextAnimated

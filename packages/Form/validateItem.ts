@@ -5,6 +5,19 @@ import {
   ValidateMessages,
 } from './types';
 
+const isEmpty = (value: any) => !value && value !== 0 && value !== false;
+
+const formatMessage = (
+  template: string,
+  replacements: Record<string, string>,
+) => {
+  let result = template;
+  for (const key in replacements) {
+    result = result.replace(`{{${key}}}`, replacements[key]);
+  }
+  return result;
+};
+
 export const validate = async (
   value: any,
   props: Pick<
@@ -23,19 +36,18 @@ export const validate = async (
     validateTrigger = TriggerAction.onChange,
     messageError,
   } = props;
+  const fieldName = String(label || name || 'Field');
+
   if (!rules?.length && !required) {
     return undefined;
   }
   if (
     required &&
-    !value &&
-    value !== 0 &&
-    value !== false &&
+    isEmpty(value) &&
     [TriggerAction.all, validateTrigger].includes(trigger!)
   ) {
     return [
-      messageError ??
-        messages.required.replace('${name}', String(label || name || 'Field')),
+      messageError ?? formatMessage(messages.required, {name: fieldName}),
     ];
   }
   const errors: (string | undefined)[] = await Promise.all(
@@ -53,46 +65,35 @@ export const validate = async (
       if (typeof transform === 'function') {
         newValue = transform(value);
       }
-      if (rule.required) {
-        if (!newValue && newValue !== 0 && newValue !== false) {
-          return (
-            message ||
-            messages.required.replace(
-              '${name}',
-              String(label || name || 'Field'),
-            )
-          );
-        }
+      if (rule.required && isEmpty(newValue)) {
+        return message || formatMessage(messages.required, {name: fieldName});
       }
       if (
         rule.whitespace &&
         String(newValue || '') !== '' &&
         !String(newValue || '').trim()
       ) {
-        return (
-          message ||
-          messages.whitespace.replace(
-            '${name}',
-            String(label || name || 'Field'),
-          )
-        );
+        return message || formatMessage(messages.whitespace, {name: fieldName});
       }
       if (rule.enum && Array.isArray(rule.enum)) {
-        if (!rule.enum?.find(en => en === newValue)) {
+        if (!rule.enum.includes(newValue)) {
           return (
             message ||
-            messages.enum
-              .replace('${name}', String(label || name || 'Field'))
-              .replace('${enum}', `[${rule.enum.join(', ')}]`)
+            formatMessage(messages.enum, {
+              name: fieldName,
+              enum: `[${rule.enum.join(', ')}]`,
+            })
           );
         }
       }
-      if (typeof rule.len === 'number' && newValue?.length > rule.len) {
+      if (
+        typeof rule.len === 'number' &&
+        newValue != null &&
+        newValue.length !== rule.len
+      ) {
         return (
           message ||
-          messages.len
-            .replace('$name', String(label || name || 'Field'))
-            .replace('${len}', String(rule.len))
+          formatMessage(messages.len, {name: fieldName, len: String(rule.len)})
         );
       }
       if (
@@ -102,9 +103,7 @@ export const validate = async (
       ) {
         return (
           message ||
-          messages.max
-            .replace('${name}', String(label || name || 'Field'))
-            .replace('${max}', String(rule.max))
+          formatMessage(messages.max, {name: fieldName, max: String(rule.max)})
         );
       }
       if (
@@ -114,26 +113,26 @@ export const validate = async (
       ) {
         return (
           message ||
-          messages.min
-            .replace('${name}', String(label || name || 'Field'))
-            .replace('${min}', String(rule.min))
+          formatMessage(messages.min, {name: fieldName, min: String(rule.min)})
         );
       }
       if (
         pattern &&
         typeof pattern.test === 'function' &&
-        !pattern.test(newValue)
+        newValue != null &&
+        !pattern.test(String(newValue))
       ) {
         return (
           message ||
-          messages.pattern
-            .replace('$name', String(label || name || 'Field'))
-            .replace('${pattern}', String(pattern))
+          formatMessage(messages.pattern, {
+            name: fieldName,
+            pattern: String(pattern),
+          })
         );
       }
       if (typeof rule.validator === 'function') {
         try {
-          await new Promise((reslove, reject) => {
+          await new Promise((resolve, reject) => {
             rule
               .validator?.(
                 {...rule, name: name as string},
@@ -142,11 +141,11 @@ export const validate = async (
                   if (messageErr) {
                     reject(new Error(messageErr));
                   } else {
-                    reslove(undefined);
+                    resolve(undefined);
                   }
                 },
               )
-              ?.then?.(() => reslove(undefined))
+              ?.then?.(() => resolve(undefined))
               ?.catch?.(reject);
           });
         } catch (e: any) {

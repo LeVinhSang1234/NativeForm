@@ -76,7 +76,7 @@ const toNestedObject = (flat: Record<string, any>) => {
   return result;
 };
 
-const getInitialValueByPath = (
+export const getNestedValue = (
   source: Record<string, any>,
   path: string,
 ): any =>
@@ -89,13 +89,19 @@ const getInitialValueByPath = (
     return acc[key];
   }, source);
 
+const getChildKeys = (store: Record<string, any>, name: string): string[] => {
+  const prefix = name + '.';
+  return Object.keys(store).filter(key => key.startsWith(prefix));
+};
+
 export const FormProvider = ({
   children,
   form,
   initialValues = {},
   scrollTo,
   onValuesChange,
-  ...p
+  onFormDispose,
+  ...formProps
 }: PropsWithChildren<
   TForm & {form: FormInstance<any>; scrollTo?: (y: number) => void}
 >) => {
@@ -114,7 +120,13 @@ export const FormProvider = ({
       if (!hasValueChanged) return;
       if (changeTimeout.current) clearTimeout(changeTimeout.current);
       changeTimeout.current = setTimeout(() => {
-        if (touched.current[name]) onValuesChange?.(values.current);
+        if (touched.current[name]) {
+          const plainValues: Record<string, any> = {};
+          for (const key in values.current) {
+            plainValues[key] = values.current[key]?.value;
+          }
+          onValuesChange?.(plainValues);
+        }
       }, 150);
     },
     [onValuesChange],
@@ -152,11 +164,10 @@ export const FormProvider = ({
     if (values.current[name]?.error) {
       return values.current[name]?.error;
     }
-    const prefix = `${name}.`;
     const errors: Record<string, string> = {};
-    Object.keys(values.current).forEach(key => {
+    getChildKeys(values.current, name).forEach(key => {
       const itemError = values.current[key]?.error;
-      if (key.startsWith(prefix) && itemError) {
+      if (itemError) {
         errors[key] = itemError as string;
       }
     });
@@ -171,10 +182,9 @@ export const FormProvider = ({
       names.forEach(name => {
         const currentError = values.current[name]?.error;
         if (currentError) errors[name] = currentError;
-        const prefix = `${name}.`;
-        Object.keys(values.current).forEach(key => {
+        getChildKeys(values.current, name).forEach(key => {
           const itemError = values.current[key]?.error;
-          if (key.startsWith(prefix) && itemError) {
+          if (itemError) {
             errors[key] = itemError;
           }
         });
@@ -195,8 +205,8 @@ export const FormProvider = ({
           if (values.current[name] !== undefined) {
             keys.push(name);
           }
-          Object.keys(values.current).forEach(key => {
-            if (key.startsWith(name + '.') && !keys.includes(key)) {
+          getChildKeys(values.current, name).forEach(key => {
+            if (!keys.includes(key)) {
               keys.push(key);
             }
           });
@@ -218,14 +228,12 @@ export const FormProvider = ({
     if (values.current[name]?.value !== undefined) {
       return values.current[name]?.value;
     }
-    const prefix = `${name}.`;
+    const childKeys = getChildKeys(values.current, name);
+    if (childKeys.length === 0) return undefined;
     const flat: Record<string, any> = {};
-    Object.keys(values.current).forEach(key => {
-      if (key.startsWith(prefix)) {
-        flat[key] = values.current[key]?.value;
-      }
+    childKeys.forEach(key => {
+      flat[key] = values.current[key]?.value;
     });
-    if (Object.keys(flat).length === 0) return undefined;
     return toNestedObject(flat)[name];
   }, []);
 
@@ -236,11 +244,11 @@ export const FormProvider = ({
 
   const isFieldsTouched = useCallback(
     (names: any[] = Object.keys(fields.current)): boolean => {
-      let allKeys: string[] = [];
+      const allKeys: string[] = [];
       names.forEach(name => {
         if (touched.current[name] !== undefined) allKeys.push(name);
-        Object.keys(fields.current).forEach(key => {
-          if (key.startsWith(name + '.') && !allKeys.includes(key)) {
+        getChildKeys(fields.current, name).forEach(key => {
+          if (!allKeys.includes(key)) {
             allKeys.push(key);
           }
         });
@@ -253,17 +261,14 @@ export const FormProvider = ({
 
   const isFieldTouched = useCallback((name: any): boolean => {
     if (touched.current[name]) return true;
-    const prefix = name + '.';
-    return Object.keys(fields.current)
-      .filter(e => e.startsWith(prefix))
-      .some(key => touched.current[key]);
+    return getChildKeys(fields.current, name).some(key => touched.current[key]);
   }, []);
 
   const isValuesChanged = useCallback(
     (names: any[] = Object.keys(fields.current)) => {
       return names.some(name => {
         const currentValue = values.current[name]?.value;
-        const initialValue = getInitialValueByPath(initialValues, name);
+        const initialValue = getNestedValue(initialValues, name);
         return currentValue !== initialValue;
       });
     },
@@ -274,10 +279,11 @@ export const FormProvider = ({
     async (names: any[] = Object.keys(fields.current)) => {
       await Promise.all(
         names.map(async name => {
-          values.current[name] = initialValues[name];
+          const initial = getNestedValue(initialValues, name);
+          values.current[name] = {value: initial};
           if (touched.current[name]) delete touched.current[name];
           return fields.current[name]?.triggerState?.({
-            value: initialValues[name],
+            value: initial,
           });
         }),
       );
@@ -287,12 +293,13 @@ export const FormProvider = ({
 
   const setFieldValue = useCallback((name: any, value: any) => {
     values.current[name] = {value};
+    fields.current[name]?.triggerState?.({value});
   }, []);
 
   const setFieldsValue = useCallback(async (_values: {[key: string]: any}) => {
     await Promise.all(
       Object.keys(_values).map(async name => {
-        values.current[name] = _values[name];
+        values.current[name] = {value: _values[name]};
         return fields.current[name]?.triggerState?.({
           value: _values[name],
         });
@@ -311,7 +318,7 @@ export const FormProvider = ({
             values.current[name]?.value,
             {...field, name},
             TriggerAction.all,
-            p.validateMessages,
+            formProps.validateMessages,
           );
           _values[name] = values.current[name]?.value;
           if (error?.[0]) {
@@ -323,13 +330,14 @@ export const FormProvider = ({
           if (_errors?.[name]) return name;
         }),
       );
-      if (scrollTo && errs.filter(Boolean)[0]) {
-        const y = layout.current[errs.filter(Boolean)[0]]?.y;
-        scrollTo?.(y);
+      const firstError = errs.find(Boolean);
+      if (scrollTo && firstError) {
+        const y = layout.current[firstError]?.y;
+        scrollTo(y);
       }
       return {values: toNestedObject(_values), errors: _errors} as any;
     },
-    [p.validateMessages, scrollTo],
+    [formProps.validateMessages, scrollTo],
   );
 
   useEffect(() => {
@@ -361,10 +369,37 @@ export const FormProvider = ({
     validateFields,
   ]);
 
+  const onFormDisposeRef = useRef(onFormDispose);
+  onFormDisposeRef.current = onFormDispose;
+
+  useEffect(() => {
+    const v = values;
+    const f = fields;
+    return () => {
+      if (!onFormDisposeRef.current) return;
+      const plainValues: Record<string, any> = {};
+      const errors: Record<string, string | undefined> = {};
+      for (const key in v.current) {
+        plainValues[key] = v.current[key]?.value;
+        if (v.current[key]?.error) {
+          errors[key] = v.current[key].error;
+        }
+      }
+      const isChanged = Object.keys(f.current).some(name => {
+        return v.current[name]?.value !== getNestedValue(initialValues, name);
+      });
+      onFormDisposeRef.current({
+        values: toNestedObject(plainValues),
+        errors,
+        isChanged,
+      });
+    };
+  }, [initialValues]);
+
   return (
     <FormContext.Provider
       value={{
-        ...p,
+        ...formProps,
         fields: fields.current,
         setField,
         unmountField,

@@ -112,10 +112,10 @@ export type TForm<T = any> = {
   requiredMarkPosition?: 'before' | 'after';
   validateMessages?: ValidateMessages; //Validation prompt template
   validateTrigger?: TriggerAction | 'onChange' | 'onBlur'; //Config field validate trigger
-  onValuesChange?: (values: {[key: string]: any}) => void; //Trigger when value updated
+  onValuesChange?: (values: T) => void; //Trigger when value updated
   onFormDispose?: (info: {
-    values: {[key: string]: any};
-    errors: {[key: string]: string | undefined};
+    values: T;
+    errors: {[key: string]: string | undefined} | undefined;
     isChanged: boolean;
   }) => void; //Trigger when form unmount
   errorStyle?: StyleProp<TextStyle>;

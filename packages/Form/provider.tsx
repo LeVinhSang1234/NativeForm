@@ -369,31 +369,30 @@ export const FormProvider = ({
     validateFields,
   ]);
 
-  const onFormDisposeRef = useRef(onFormDispose);
-  onFormDisposeRef.current = onFormDispose;
-
   useEffect(() => {
     const v = values;
     const f = fields;
     return () => {
-      if (!onFormDisposeRef.current) return;
+      if (!onFormDispose) return;
       const plainValues: Record<string, any> = {};
-      const errors: Record<string, string | undefined> = {};
+      let errors: Record<string, string | undefined> | undefined;
       for (const key in v.current) {
         plainValues[key] = v.current[key]?.value;
         if (v.current[key]?.error) {
+          if (!errors) errors = {};
           errors[key] = v.current[key].error;
         }
       }
       const isChanged = Object.keys(f.current).some(name => {
         return v.current[name]?.value !== getNestedValue(initialValues, name);
       });
-      onFormDisposeRef.current({
+      onFormDispose?.({
         values: toNestedObject(plainValues),
         errors,
         isChanged,
       });
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialValues]);
 
   return (

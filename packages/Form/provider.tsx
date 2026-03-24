@@ -109,6 +109,7 @@ export const FormProvider = ({
   const touched = useRef<Record<string, boolean>>({});
   const layout = useRef<Record<string, LayoutRectangle>>({});
   const values = useRef<Record<string, TItemValue>>({});
+  const changed = useRef<Record<string, boolean>>({});
   const changeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const setValue = useCallback(
@@ -118,6 +119,7 @@ export const FormProvider = ({
       values.current[name] = value;
       if (!touched.current[name]) touched.current[name] = true;
       if (!hasValueChanged) return;
+      changed.current[name] = true;
       if (changeTimeout.current) clearTimeout(changeTimeout.current);
       changeTimeout.current = setTimeout(() => {
         if (touched.current[name]) {
@@ -158,6 +160,7 @@ export const FormProvider = ({
     delete values.current?.[name];
     delete fields.current?.[name];
     delete touched.current?.[name];
+    delete changed.current?.[name];
   }, []);
 
   const getFieldError = useCallback((name: any) => {
@@ -266,13 +269,9 @@ export const FormProvider = ({
 
   const isValuesChanged = useCallback(
     (names: any[] = Object.keys(fields.current)) => {
-      return names.some(name => {
-        const currentValue = values.current[name]?.value;
-        const initialValue = getNestedValue(initialValues, name);
-        return currentValue !== initialValue;
-      });
+      return names.some(name => changed.current[name]);
     },
-    [initialValues],
+    [],
   );
 
   const resetFields = useCallback(
@@ -282,6 +281,7 @@ export const FormProvider = ({
           const initial = getNestedValue(initialValues, name);
           const v = fields.current[name]?.normalize?.(initial) ?? initial;
           values.current[name] = {value: v};
+          delete changed.current[name];
           if (touched.current[name]) delete touched.current[name];
           return fields.current[name]?.triggerState?.({
             value: v,
@@ -377,7 +377,7 @@ export const FormProvider = ({
 
   useEffect(() => {
     const v = values;
-    const f = fields;
+    const c = changed;
     return () => {
       if (!onFormDispose) return;
       const plainValues: Record<string, any> = {};
@@ -389,9 +389,7 @@ export const FormProvider = ({
           errors[key] = v.current[key].error;
         }
       }
-      const isChanged = Object.keys(f.current).some(name => {
-        return v.current[name]?.value !== getNestedValue(initialValues, name);
-      });
+      const isChanged = Object.keys(c.current).some(name => c.current[name]);
       onFormDispose?.({
         values: toNestedObject(plainValues),
         errors,

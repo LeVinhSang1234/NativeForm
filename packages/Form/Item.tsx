@@ -62,7 +62,16 @@ const Item = <T = any, K extends keyof T = keyof T>({
       preserve: itemPreserve ?? preserve,
       messageError,
     }),
-    [rules, required, name, label, validateTrigger, itemPreserve, preserve, messageError],
+    [
+      rules,
+      required,
+      name,
+      label,
+      validateTrigger,
+      itemPreserve,
+      preserve,
+      messageError,
+    ],
   );
 
   const getInitial = useCallback(
@@ -70,7 +79,8 @@ const Item = <T = any, K extends keyof T = keyof T>({
       getValueProps(
         initialValue ?? (getNestedValue(initialValues, nameStr) as any),
       ),
-    [getValueProps, initialValue, initialValues, nameStr],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [nameStr],
   );
 
   const [itemValue, setItemValue] = useState<TItemValue>({

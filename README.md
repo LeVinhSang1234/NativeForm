@@ -162,6 +162,7 @@ type FormItem = {
   preserve?: boolean; //Keep field value even when field removed
   style?: StyleProp<ViewStyle>;
   getValueProps?: (v: any) => any;
+  normalize?: (v: any) => any;
   children:
     | ((handle: {
         onChangeValue: (value: any) => any;
@@ -317,8 +318,15 @@ Used with label, whether to display : after label text.
 - getValueProps `<(value: any) => any>`
 
 ```
-Additional props with sub component
-Convert data onChange
+Transform stored value before passing to child component (stored value → display value).
+```
+
+- normalize `<(value: any) => any>`
+
+```
+Transform input value before storing (input value → stored value).
+The inverse of getValueProps.
+Applied in onChangeValue, setFieldValue, setFieldsValue, resetFields, and validateFields.
 ```
 
 - labelAlign `<'left' | 'right'>`

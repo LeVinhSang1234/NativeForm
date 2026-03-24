@@ -48,6 +48,7 @@ export declare type FormItem<T = any, K extends keyof T = keyof T> = {
   errorStyle?: StyleProp<TextStyle>;
   labelStyle?: StyleProp<TextStyle>;
   getValueProps?: (v: T[K]) => any;
+  normalize?: (v: any) => T[K];
   children:
     | ((handle: {
         onChangeValue: (value: T[K]) => void;

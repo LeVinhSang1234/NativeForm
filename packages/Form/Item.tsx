@@ -19,6 +19,7 @@ const Item = <T = any, K extends keyof T = keyof T>({
   children,
   name,
   getValueProps: getValuePropsProp,
+  normalize,
   required,
   label,
   rules,
@@ -61,6 +62,7 @@ const Item = <T = any, K extends keyof T = keyof T>({
       validateTrigger,
       preserve: itemPreserve ?? preserve,
       messageError,
+      normalize,
     }),
     [
       rules,
@@ -71,6 +73,7 @@ const Item = <T = any, K extends keyof T = keyof T>({
       itemPreserve,
       preserve,
       messageError,
+      normalize,
     ],
   );
 
@@ -109,20 +112,21 @@ const Item = <T = any, K extends keyof T = keyof T>({
 
   const onChangeValue = useCallback(
     async (v: any) => {
-      setItemValue(prev => ({...prev, value: v}));
+      const normalized = normalize ? normalize(v) : v;
+      setItemValue(prev => ({...prev, value: normalized}));
       const errors = await validate(
-        v,
+        normalized,
         props,
         TriggerAction.onChange,
         validateMessages,
       );
       setItemValue(prev => ({
         ...prev,
-        value: v,
+        value: normalized,
         error: errors?.[0] as string,
       }));
     },
-    [props, validateMessages],
+    [normalize, props, validateMessages],
   );
 
   useEffect(() => {

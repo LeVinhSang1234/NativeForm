@@ -61,6 +61,7 @@ const Item = <T = any, K extends keyof T = keyof T>({
       validateTrigger,
       preserve: itemPreserve ?? preserve,
       messageError,
+      getValueProps,
     }),
     [
       rules,
@@ -71,6 +72,7 @@ const Item = <T = any, K extends keyof T = keyof T>({
       itemPreserve,
       preserve,
       messageError,
+      getValueProps,
     ],
   );
 

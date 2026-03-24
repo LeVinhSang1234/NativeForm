@@ -279,7 +279,8 @@ export const FormProvider = ({
     async (names: any[] = Object.keys(fields.current)) => {
       await Promise.all(
         names.map(async name => {
-          const initial = getNestedValue(initialValues, name);
+          const raw = getNestedValue(initialValues, name);
+          const initial = fields.current[name]?.getValueProps?.(raw) ?? raw;
           values.current[name] = {value: initial};
           if (touched.current[name]) delete touched.current[name];
           return fields.current[name]?.triggerState?.({
@@ -292,16 +293,19 @@ export const FormProvider = ({
   );
 
   const setFieldValue = useCallback((name: any, value: any) => {
-    values.current[name] = {value};
-    fields.current[name]?.triggerState?.({value});
+    const v = fields.current[name]?.getValueProps?.(value) ?? value;
+    values.current[name] = {value: v};
+    fields.current[name]?.triggerState?.({value: v});
   }, []);
 
   const setFieldsValue = useCallback(async (_values: {[key: string]: any}) => {
     await Promise.all(
       Object.keys(_values).map(async name => {
-        values.current[name] = {value: _values[name]};
+        const v =
+          fields.current[name]?.getValueProps?.(_values[name]) ?? _values[name];
+        values.current[name] = {value: v};
         return fields.current[name]?.triggerState?.({
-          value: _values[name],
+          value: v,
         });
       }),
     );
@@ -320,12 +324,14 @@ export const FormProvider = ({
             TriggerAction.all,
             formProps.validateMessages,
           );
-          _values[name] = values.current[name]?.value;
+          const raw = values.current[name]?.value;
+          const v = fields.current[name]?.getValueProps?.(raw) ?? raw;
+          _values[name] = v;
           if (error?.[0]) {
             if (!_errors) _errors = {};
             _errors[name] = error?.[0];
           }
-          values.current[name] = {value: _values[name], error: _errors?.[name]};
+          values.current[name] = {value: v, error: _errors?.[name]};
           fields.current[name]?.triggerState?.(values.current[name]);
           if (_errors?.[name]) return name;
         }),

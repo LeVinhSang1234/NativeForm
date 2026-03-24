@@ -61,7 +61,6 @@ const Item = <T = any, K extends keyof T = keyof T>({
       validateTrigger,
       preserve: itemPreserve ?? preserve,
       messageError,
-      getValueProps,
     }),
     [
       rules,
@@ -72,15 +71,11 @@ const Item = <T = any, K extends keyof T = keyof T>({
       itemPreserve,
       preserve,
       messageError,
-      getValueProps,
     ],
   );
 
   const getInitial = useCallback(
-    () =>
-      getValueProps(
-        initialValue ?? (getNestedValue(initialValues, nameStr) as any),
-      ),
+    () => initialValue ?? (getNestedValue(initialValues, nameStr) as any),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [nameStr],
   );
@@ -114,7 +109,7 @@ const Item = <T = any, K extends keyof T = keyof T>({
 
   const onChangeValue = useCallback(
     async (v: any) => {
-      setItemValue(prev => ({...prev, value: getValueProps(v)}));
+      setItemValue(prev => ({...prev, value: v}));
       const errors = await validate(
         v,
         props,
@@ -123,11 +118,11 @@ const Item = <T = any, K extends keyof T = keyof T>({
       );
       setItemValue(prev => ({
         ...prev,
-        value: getValueProps(v),
+        value: v,
         error: errors?.[0] as string,
       }));
     },
-    [props, validateMessages, getValueProps],
+    [props, validateMessages],
   );
 
   useEffect(() => {
@@ -154,11 +149,18 @@ const Item = <T = any, K extends keyof T = keyof T>({
   }, [requiredMark]);
 
   const renderedChildren = useMemo(() => {
+    const v = getValueProps(itemValue.value);
+
     if (typeof children === 'function') {
-      return children({onChangeValue, onBlur, ...itemValue});
+      return children({onChangeValue, onBlur, ...itemValue, value: v});
     }
-    return cloneElement(children as any, {...itemValue, onChangeValue, onBlur});
-  }, [itemValue, children, onBlur, onChangeValue]);
+    return cloneElement(children as any, {
+      ...itemValue,
+      value: v,
+      onChangeValue,
+      onBlur,
+    });
+  }, [children, itemValue, onChangeValue, onBlur, getValueProps]);
 
   return (
     <View

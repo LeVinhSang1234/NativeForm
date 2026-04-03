@@ -32,7 +32,7 @@ export type TFormContext<T> = {
   unmountField: (name: string) => void;
   fields: TField;
   setLayout: (name: string, rect: LayoutRectangle) => void;
-  setValue: (name: string, value: any) => void;
+  setValue: (name: string, value: any, userAction?: boolean) => void;
   initialValues: Record<string, any>;
 } & T;
 
@@ -109,26 +109,21 @@ export const FormProvider = ({
   const touched = useRef<Record<string, boolean>>({});
   const layout = useRef<Record<string, LayoutRectangle>>({});
   const values = useRef<Record<string, TItemValue>>({});
-  const changed = useRef<Record<string, boolean>>({});
   const changeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const setValue = useCallback(
-    (name: string, value: TItemValue) => {
-      const prevValue = values.current[name]?.value;
-      const hasValueChanged = prevValue !== value?.value;
+    (name: string, value: TItemValue, userAction?: boolean) => {
       values.current[name] = value;
-      if (!touched.current[name]) touched.current[name] = true;
-      if (!hasValueChanged) return;
-      changed.current[name] = true;
+      if (userAction) {
+        if (!touched.current[name]) touched.current[name] = true;
+      }
       if (changeTimeout.current) clearTimeout(changeTimeout.current);
       changeTimeout.current = setTimeout(() => {
-        if (touched.current[name]) {
-          const plainValues: Record<string, any> = {};
-          for (const key in values.current) {
-            plainValues[key] = values.current[key]?.value;
-          }
-          onValuesChange?.(plainValues);
+        const plainValues: Record<string, any> = {};
+        for (const key in values.current) {
+          plainValues[key] = values.current[key]?.value;
         }
+        onValuesChange?.(plainValues);
       }, 150);
     },
     [onValuesChange],
@@ -160,7 +155,6 @@ export const FormProvider = ({
     delete values.current?.[name];
     delete fields.current?.[name];
     delete touched.current?.[name];
-    delete changed.current?.[name];
   }, []);
 
   const getFieldError = useCallback((name: any) => {
@@ -269,7 +263,7 @@ export const FormProvider = ({
 
   const isValuesChanged = useCallback(
     (names: any[] = Object.keys(fields.current)) => {
-      return names.some(name => changed.current[name]);
+      return names.some(name => touched.current[name]);
     },
     [],
   );
@@ -281,7 +275,6 @@ export const FormProvider = ({
           const initial = getNestedValue(initialValues, name);
           const v = fields.current[name]?.normalize?.(initial) ?? initial;
           values.current[name] = {value: v};
-          delete changed.current[name];
           if (touched.current[name]) delete touched.current[name];
           return fields.current[name]?.triggerState?.({
             value: v,
@@ -377,7 +370,7 @@ export const FormProvider = ({
 
   useEffect(() => {
     const v = values;
-    const c = changed;
+    const t = touched;
     return () => {
       if (!onFormDispose) return;
       const plainValues: Record<string, any> = {};
@@ -389,7 +382,7 @@ export const FormProvider = ({
           errors[key] = v.current[key].error;
         }
       }
-      const isChanged = Object.keys(c.current).some(name => c.current[name]);
+      const isChanged = Object.keys(t.current).some(name => t.current[name]);
       onFormDispose?.({
         values: toNestedObject(plainValues),
         errors,

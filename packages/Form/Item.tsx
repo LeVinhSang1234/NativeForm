@@ -4,7 +4,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import {FormItem, TItemValue, TriggerAction} from './types';
@@ -79,8 +78,7 @@ const Item = <T = any, K extends keyof T = keyof T>({
 
   const getInitial = useCallback(
     () => initialValue ?? (getNestedValue(initialValues, nameStr) as any),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [nameStr],
+    [initialValue, initialValues, nameStr],
   );
 
   const [itemValue, setItemValue] = useState<TItemValue>({
@@ -89,20 +87,15 @@ const Item = <T = any, K extends keyof T = keyof T>({
 
   useEffect(() => {
     if (typeof name !== 'string') return;
-    setField(name, {...props, triggerState: setItemValue}, itemValue);
-  }, [itemValue, name, props, setField]);
+    setField(name, {...props, triggerState: setItemValue});
+  }, [name, props, setField]);
 
-  const mountedRef = useRef(false);
   useEffect(() => {
     if (typeof name !== 'string') return;
-    if (!mountedRef.current) {
-      mountedRef.current = true;
-      return;
-    }
-    const newValue = {value: getInitial()};
-    setItemValue(newValue);
-    setField(name, {...props, triggerState: setItemValue}, newValue);
-  }, [getInitial, name, props, setField]);
+    const v = {value: getInitial()};
+    setItemValue(v);
+    setValue(nameStr, v);
+  }, [getInitial, name, nameStr, setValue]);
 
   useEffect(() => {
     return () => {
@@ -113,25 +106,21 @@ const Item = <T = any, K extends keyof T = keyof T>({
   const onChangeValue = useCallback(
     async (v: any) => {
       const normalized = normalize ? normalize(v) : v;
-      setItemValue(prev => ({...prev, value: normalized}));
+      const next = {value: normalized};
+      setItemValue(next);
+      setValue(nameStr, next, true);
       const errors = await validate(
         normalized,
         props,
         TriggerAction.onChange,
         validateMessages,
       );
-      setItemValue(prev => ({
-        ...prev,
-        value: normalized,
-        error: errors?.[0] as string,
-      }));
+      const final = {value: normalized, error: errors?.[0] as string};
+      setItemValue(final);
+      setValue(nameStr, final, true);
     },
-    [normalize, props, validateMessages],
+    [normalize, props, validateMessages, nameStr, setValue],
   );
-
-  useEffect(() => {
-    setValue(nameStr, itemValue);
-  }, [itemValue, nameStr, setValue]);
 
   const onBlur = useCallback(async () => {
     const errors = await validate(
@@ -141,8 +130,10 @@ const Item = <T = any, K extends keyof T = keyof T>({
       validateMessages,
     );
     if (!errors) return;
-    setItemValue(prev => ({...prev, error: errors?.[0] as string}));
-  }, [itemValue.value, props, validateMessages]);
+    const next = {...itemValue, error: errors?.[0] as string};
+    setItemValue(next);
+    setValue(nameStr, next);
+  }, [itemValue, props, validateMessages, nameStr, setValue]);
 
   const isRequired = useMemo(() => {
     return required || rules?.some(rule => rule.required);

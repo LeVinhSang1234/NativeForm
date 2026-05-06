@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {FormItem, TItemValue, TriggerAction} from './types';
@@ -76,9 +77,13 @@ const Item = <T = any, K extends keyof T = keyof T>({
     ],
   );
 
+  const initialValuesRef = useRef(initialValues);
+  initialValuesRef.current = initialValues;
   const getInitial = useCallback(
-    () => initialValue ?? (getNestedValue(initialValues, nameStr) as any),
-    [initialValue, initialValues, nameStr],
+    () =>
+      initialValue ??
+      (getNestedValue(initialValuesRef.current, nameStr) as any),
+    [initialValue, nameStr],
   );
 
   const [itemValue, setItemValue] = useState<TItemValue>({
@@ -153,7 +158,10 @@ const Item = <T = any, K extends keyof T = keyof T>({
       ...itemValue,
       value: v,
       onChangeValue,
-      onBlur,
+      onBlur: e => {
+        onBlur?.();
+        (children as any)?.props.onBlur?.(e);
+      },
     });
   }, [children, itemValue, onChangeValue, onBlur, getValueProps]);
 

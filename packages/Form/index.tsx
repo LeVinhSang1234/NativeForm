@@ -20,18 +20,50 @@ const methods: (keyof FormInstance)[] = [
   'resetFields',
   'setFieldValue',
   'setFieldsValue',
+  'setInitFieldsValue',
   'validateFields',
   'setFieldError',
+  'clearTouched',
 ];
+
+let formId = 0;
 
 export const useForm = <T,>(initialValues?: Partial<T>): FormInstance<T> => {
   const formRef = useRef<FormInstance<T> | null>(null);
   if (!formRef.current) {
+    const instance = {} as FormInstance<T>;
     formRef.current = methods.reduce((acc, method) => {
       // @ts-ignore
-      acc[method] = () => null;
+      acc[method] = async (...args: any[]) => {
+        await acc.isReady();
+        // @ts-ignore
+        return acc[method](...args);
+      };
       return acc;
-    }, {} as FormInstance<T>);
+    }, instance);
+    formRef.current.id = ++formId;
+    formRef.current._ready = false;
+    formRef.current.isReady = (timeout = 10000) =>
+      new Promise<void>((resolve, reject) => {
+        if (formRef.current?._ready) return resolve();
+        const interval = 50;
+        let elapsed = 0;
+        const timer = setInterval(() => {
+          elapsed += interval;
+          if (formRef.current?._ready) {
+            clearInterval(timer);
+            return resolve();
+          }
+          if (elapsed >= timeout) {
+            clearInterval(timer);
+            return reject(
+              new Error(
+                `Form #${formRef.current?.id} is not ready after ${timeout}ms`,
+              ),
+            );
+          }
+        }, interval);
+      });
     formRef.current.initialValues = initialValues;
   }
   return formRef.current;

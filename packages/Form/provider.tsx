@@ -76,6 +76,44 @@ const toNestedObject = (flat: Record<string, any>) => {
   return result;
 };
 
+const isPlainObject = (v: any): boolean => {
+  if (v === null || typeof v !== 'object' || Array.isArray(v)) return false;
+  const proto = Object.getPrototypeOf(v);
+  return proto === Object.prototype || proto === null;
+};
+
+const flattenValues = (
+  input: Record<string, any>,
+  fields: Record<string, any>,
+  prefix = '',
+): Record<string, any> => {
+  const result: Record<string, any> = {};
+  Object.keys(input).forEach(key => {
+    const path = prefix ? `${prefix}.${key}` : key;
+    const value = input[key];
+    if (isPlainObject(value) && !fields[path]) {
+      Object.assign(result, flattenValues(value, fields, path));
+    } else {
+      result[path] = value;
+    }
+  });
+  return result;
+};
+
+const deepMergeInto = (
+  target: Record<string, any>,
+  source: Record<string, any>,
+) => {
+  Object.keys(source).forEach(key => {
+    if (isPlainObject(source[key]) && isPlainObject(target[key])) {
+      deepMergeInto(target[key], source[key]);
+    } else {
+      target[key] = source[key];
+    }
+  });
+  return target;
+};
+
 export const getNestedValue = (
   source: Record<string, any>,
   path: string,
@@ -109,7 +147,29 @@ export const FormProvider = ({
   const touched = useRef<Record<string, boolean>>({});
   const layout = useRef<Record<string, LayoutRectangle>>({});
   const values = useRef<Record<string, TItemValue>>({});
+  const mergedInitialValues = useRef<Record<string, any>>({...initialValues});
+  const prevInitialValues = useRef(initialValues);
+  if (prevInitialValues.current !== initialValues) {
+    prevInitialValues.current = initialValues;
+    mergedInitialValues.current = {
+      ...mergedInitialValues.current,
+      ...initialValues,
+    };
+  }
   const changeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onValuesChangeRef = useRef(onValuesChange);
+  onValuesChangeRef.current = onValuesChange;
+
+  const fireValuesChange = useCallback(() => {
+    if (changeTimeout.current) clearTimeout(changeTimeout.current);
+    changeTimeout.current = setTimeout(() => {
+      const plainValues: Record<string, any> = {};
+      for (const key in values.current) {
+        plainValues[key] = values.current[key]?.value;
+      }
+      onValuesChangeRef.current?.(plainValues);
+    }, 150);
+  }, []);
 
   const setValue = useCallback(
     (name: string, value: TItemValue, userAction?: boolean) => {
@@ -117,16 +177,9 @@ export const FormProvider = ({
       if (userAction) {
         if (!touched.current[name]) touched.current[name] = true;
       }
-      if (changeTimeout.current) clearTimeout(changeTimeout.current);
-      changeTimeout.current = setTimeout(() => {
-        const plainValues: Record<string, any> = {};
-        for (const key in values.current) {
-          plainValues[key] = values.current[key]?.value;
-        }
-        onValuesChange?.(plainValues);
-      }, 150);
+      fireValuesChange();
     },
-    [onValuesChange],
+    [fireValuesChange],
   );
 
   const setField = useCallback(
@@ -268,11 +321,18 @@ export const FormProvider = ({
     [],
   );
 
+  const clearTouched = useCallback((names?: any[]) => {
+    const keys = names ?? Object.keys(touched.current);
+    keys.forEach(name => {
+      delete touched.current[name];
+    });
+  }, []);
+
   const resetFields = useCallback(
     async (names: any[] = Object.keys(fields.current)) => {
       await Promise.all(
         names.map(async name => {
-          const initial = getNestedValue(initialValues, name);
+          const initial = getNestedValue(mergedInitialValues.current, name);
           const v = fields.current[name]?.normalize?.(initial) ?? initial;
           values.current[name] = {value: v};
           if (touched.current[name]) delete touched.current[name];
@@ -282,27 +342,50 @@ export const FormProvider = ({
         }),
       );
     },
-    [initialValues],
+    [],
   );
 
   const setFieldValue = useCallback((name: any, value: any) => {
     const v = fields.current[name]?.normalize?.(value) ?? value;
     values.current[name] = {value: v};
+    if (!touched.current[name]) touched.current[name] = true;
     fields.current[name]?.triggerState?.({value: v});
   }, []);
 
-  const setFieldsValue = useCallback(async (_values: {[key: string]: any}) => {
-    await Promise.all(
-      Object.keys(_values).map(async name => {
-        const v =
-          fields.current[name]?.normalize?.(_values[name]) ?? _values[name];
-        values.current[name] = {value: v};
-        return fields.current[name]?.triggerState?.({
-          value: v,
-        });
-      }),
-    );
-  }, []);
+  const setInitFieldsValue = useCallback(
+    async (_values: {[key: string]: any}) => {
+      deepMergeInto(mergedInitialValues.current, _values);
+      const flat = flattenValues(_values, fields.current);
+      await Promise.all(
+        Object.keys(flat).map(async name => {
+          const v = fields.current[name]?.normalize?.(flat[name]) ?? flat[name];
+          values.current[name] = {value: v};
+          return fields.current[name]?.triggerState?.({
+            value: v,
+          });
+        }),
+      );
+    },
+    [],
+  );
+
+  const setFieldsValue = useCallback(
+    async (_values: {[key: string]: any}) => {
+      const flat = flattenValues(_values, fields.current);
+      await Promise.all(
+        Object.keys(flat).map(async name => {
+          const v = fields.current[name]?.normalize?.(flat[name]) ?? flat[name];
+          values.current[name] = {value: v};
+          if (!touched.current[name]) touched.current[name] = true;
+          return fields.current[name]?.triggerState?.({
+            value: v,
+          });
+        }),
+      );
+      fireValuesChange();
+    },
+    [fireValuesChange],
+  );
 
   const validateFields = useCallback(
     async (names: any[] = Object.keys(fields.current)) => {
@@ -350,10 +433,14 @@ export const FormProvider = ({
     form.resetFields = resetFields;
     form.setFieldValue = setFieldValue;
     form.setFieldsValue = setFieldsValue;
+    form.setInitFieldsValue = setInitFieldsValue;
     form.validateFields = validateFields;
     form.setFieldError = setFieldError;
+    form.clearTouched = clearTouched;
+    form._ready = true;
   }, [
     form,
+    clearTouched,
     getFieldError,
     getFieldValue,
     getFieldsError,
@@ -365,6 +452,7 @@ export const FormProvider = ({
     setFieldError,
     setFieldValue,
     setFieldsValue,
+    setInitFieldsValue,
     validateFields,
   ]);
 

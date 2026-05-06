@@ -95,9 +95,15 @@ export declare type FormInstance<T = Record<string, any>> = {
   isValuesChanged: (names?: NamePath<T>[]) => boolean; //Check if values changed compared to initialValues
   resetFields: (fields?: NamePath<T>[]) => Promise<void>; //Reset fields to initialValues
   setFieldValue: (name: keyof T, value: any) => void; //Set fields value(Will directly pass to form store. If you do not want to modify passed object, please clone first)
-  setFieldsValue: (values: {[key in NamePath<T>]?: any}) => Promise<void>; //Set fields value(Will directly pass to form store. If you do not want to modify passed object, please clone first).
+  setFieldsValue: (values: {[key in NamePath<T>]?: any}) => Promise<void>; //Set fields value and mark as touched (isChanged = true).
+  setInitFieldsValue: (values: {[key in NamePath<T>]?: any}) => Promise<void>; //Set fields value without marking as touched (isChanged stays unchanged).
   validateFields: (names?: NamePath<T>[]) => Promise<ValueValidateField<T>>; //Validate fields
   setFieldError: (name: NamePath<T>, error?: string | false) => void;
+  clearTouched: (names?: NamePath<T>[]) => void; //Clear touched state for fields. Clears all if no names provided.
+  id: number; //Unique form instance id
+  /** @internal */
+  _ready: boolean;
+  isReady: (timeout?: number) => Promise<void>; //Await this to ensure the form has mounted and all methods are available. Default timeout 10s.
   initialValues?: Partial<T>;
 };
 

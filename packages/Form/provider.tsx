@@ -17,6 +17,7 @@ import {
   FilterGetValues,
   TItemValue,
   ValidateMessages,
+  KeyboardManagerConfig,
 } from './types';
 import {validate} from './validateItem';
 import {LayoutRectangle, StyleProp, TextStyle} from 'react-native';
@@ -506,6 +507,7 @@ type GlobalContext = {
   requiredMarkStyle?: StyleProp<TextStyle>;
   requiredMarkPosition?: 'before' | 'after';
   validateMessages?: ValidateMessages; //Validation prompt template
+  keyboardManager?: KeyboardManagerConfig; //Tune the native keyboard manager. Turn it on per Form with the keyboardManager prop
 };
 
 export const FormContextGlobal = createContext<GlobalContext>({});

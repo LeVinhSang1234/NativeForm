@@ -1,5 +1,5 @@
 import {ReactNode} from 'react';
-import {StyleProp, TextStyle, ViewStyle} from 'react-native';
+import {ColorValue, StyleProp, TextStyle, ViewStyle} from 'react-native';
 
 export declare type ValidateMessages = {
   required?: string;
@@ -69,6 +69,30 @@ export const defaultValidateMessages = {
   enum: '{{name}} must be one of {{enum}}',
 };
 
+//iOS only. Android keeps the focused input visible through windowSoftInputMode,
+//so every key here is ignored on Android.
+export declare type KeyboardManagerConfig = {
+  distance?: number; //Space kept between the focused input and the bar or the keyboard. Default 12
+  toolbar?: boolean; //Show an accessory bar above the keyboard. Default false
+  toolbarDoneText?: string; //Label of the done button. Default 'Done'
+  toolbarPreviousNext?: boolean; //Show the arrows moving to the previous/next input. Default false
+  toolbarPlaceholder?: boolean; //Show the placeholder of the focused input inside the bar. Default false
+  toolbarTintColor?: ColorValue; //Color of the bar buttons
+  toolbarBarTintColor?: ColorValue; //Background color of the bar
+  keyboardAppearance?: 'default' | 'light' | 'dark'; //Force the keyboard appearance of every input inside the Form
+};
+
+export const defaultKeyboardManager: KeyboardManagerConfig = {
+  distance: 12,
+  toolbar: false,
+  toolbarDoneText: 'Done',
+  toolbarPreviousNext: false,
+  toolbarPlaceholder: false,
+  toolbarTintColor: undefined, //Keep the native tint of the bar
+  toolbarBarTintColor: undefined, //Keep the native background of the bar
+  keyboardAppearance: undefined, //Keep the appearance each input asked for
+};
+
 export declare type FilterGetValues = (touched: boolean) => true;
 
 export declare type ValueValidateField<T = any> = {
@@ -120,6 +144,7 @@ export type TForm<T = any> = {
   validateMessages?: ValidateMessages; //Validation prompt template
   validateTrigger?: TriggerAction | 'onChange' | 'onBlur'; //Config field validate trigger
   onValuesChange?: (values: T) => void; //Trigger when value updated
+  keyboardManager?: boolean; //Let the native keyboard manager keep the focused input visible. Tune it with FormProvider keyboardManager
   onFormDispose?: (info: {
     values: T;
     errors: {[key: string]: string | undefined} | undefined;

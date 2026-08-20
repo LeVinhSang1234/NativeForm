@@ -1,13 +1,17 @@
 import React, {forwardRef, useCallback, useRef, PropsWithChildren} from 'react';
-import {FormInstance, TForm} from './types';
+import {defaultKeyboardManager, FormInstance, TForm} from './types';
 import {FormProvider, useFormContextGlobal} from './provider';
 import Item from './Item';
 import {
+  Platform,
   ScrollViewProps,
+  StyleProp,
   StyleSheet,
   View,
+  ViewStyle,
   ScrollView as ScrollViewLibrary,
 } from 'react-native';
+import KeyboardManagerView from './RNFormKeyboardManagerNativeComponent';
 
 const methods: (keyof FormInstance)[] = [
   'getFieldError',
@@ -27,6 +31,34 @@ const methods: (keyof FormInstance)[] = [
 ];
 
 let formId = 0;
+
+const KeyboardManager = ({
+  style,
+  children,
+}: PropsWithChildren<{style?: StyleProp<ViewStyle>}>) => {
+  const {keyboardManager} = useFormContextGlobal();
+  // Android keeps the focused input visible through windowSoftInputMode, there
+  // is no native view to mount there.
+  if (Platform.OS !== 'ios') {
+    return <View style={style}>{children}</View>;
+  }
+  const config = {...defaultKeyboardManager, ...keyboardManager};
+  return (
+    <KeyboardManagerView
+      enabled
+      distance={config.distance}
+      toolbar={config.toolbar}
+      toolbarDoneText={config.toolbarDoneText}
+      toolbarPreviousNext={config.toolbarPreviousNext}
+      toolbarPlaceholder={config.toolbarPlaceholder}
+      toolbarTintColor={config.toolbarTintColor}
+      toolbarBarTintColor={config.toolbarBarTintColor}
+      keyboardAppearance={config.keyboardAppearance}
+      style={style}>
+      {children}
+    </KeyboardManagerView>
+  );
+};
 
 export const useForm = <T,>(initialValues?: Partial<T>): FormInstance<T> => {
   const formRef = useRef<FormInstance<T> | null>(null);
@@ -69,7 +101,11 @@ export const useForm = <T,>(initialValues?: Partial<T>): FormInstance<T> => {
   return formRef.current;
 };
 
-const Form = <T,>({style, ...props}: PropsWithChildren<TForm<T>>) => {
+const Form = <T,>({
+  style,
+  keyboardManager,
+  ...props
+}: PropsWithChildren<TForm<T>>) => {
   const {
     requiredMark,
     requiredMarkPosition,
@@ -78,20 +114,26 @@ const Form = <T,>({style, ...props}: PropsWithChildren<TForm<T>>) => {
     labelStyle,
     validateMessages,
   } = useFormContextGlobal();
-  return (
-    <View style={[styles.root, style]}>
-      <FormProvider
-        requiredMark={requiredMark}
-        requiredMarkPosition={requiredMarkPosition}
-        requiredMarkStyle={requiredMarkStyle}
-        errorStyle={errorStyle}
-        labelStyle={labelStyle}
-        validateMessages={validateMessages}
-        {...props}
-        initialValues={props.initialValues ?? props.form?.initialValues}
-      />
-    </View>
+  const content = (
+    <FormProvider
+      requiredMark={requiredMark}
+      requiredMarkPosition={requiredMarkPosition}
+      requiredMarkStyle={requiredMarkStyle}
+      errorStyle={errorStyle}
+      labelStyle={labelStyle}
+      validateMessages={validateMessages}
+      {...props}
+      initialValues={props.initialValues ?? props.form?.initialValues}
+    />
   );
+
+  if (keyboardManager) {
+    return (
+      <KeyboardManager style={[styles.root, style]}>{content}</KeyboardManager>
+    );
+  }
+
+  return <View style={[styles.root, style]}>{content}</View>;
 };
 
 const ScrollView = forwardRef<
@@ -114,6 +156,7 @@ const ScrollView = forwardRef<
       onValuesChange,
       errorStyle,
       labelStyle,
+      keyboardManager,
       children,
       onFormDispose,
       ...props
@@ -140,27 +183,35 @@ const ScrollView = forwardRef<
       innerRef.current?.scrollTo?.({animated: true, y});
     }, []);
 
+    const content = (
+      <FormProvider
+        onFormDispose={onFormDispose}
+        form={form}
+        colon={colon}
+        initialValues={initialValues ?? form.initialValues}
+        labelAlign={labelAlign}
+        name={name}
+        preserve={preserve}
+        requiredMark={requiredMark ?? _requiredMark}
+        requiredMarkStyle={requiredMarkStyle ?? _requiredMarkStyle}
+        requiredMarkPosition={requiredMarkPosition ?? _requiredMarkPosition}
+        validateMessages={validateMessages ?? _validateMessages}
+        validateTrigger={validateTrigger}
+        onValuesChange={onValuesChange}
+        errorStyle={errorStyle ?? _errorStyle}
+        labelStyle={labelStyle ?? _labelStyle}
+        scrollTo={scrollTo}>
+        {children}
+      </FormProvider>
+    );
+
     return (
       <ScrollViewLibrary {...props} ref={innerRef}>
-        <FormProvider
-          onFormDispose={onFormDispose}
-          form={form}
-          colon={colon}
-          initialValues={initialValues ?? form.initialValues}
-          labelAlign={labelAlign}
-          name={name}
-          preserve={preserve}
-          requiredMark={requiredMark ?? _requiredMark}
-          requiredMarkStyle={requiredMarkStyle ?? _requiredMarkStyle}
-          requiredMarkPosition={requiredMarkPosition ?? _requiredMarkPosition}
-          validateMessages={validateMessages ?? _validateMessages}
-          validateTrigger={validateTrigger}
-          onValuesChange={onValuesChange}
-          errorStyle={errorStyle ?? _errorStyle}
-          labelStyle={labelStyle ?? _labelStyle}
-          scrollTo={scrollTo}>
-          {children}
-        </FormProvider>
+        {keyboardManager ? (
+          <KeyboardManager style={styles.root}>{content}</KeyboardManager>
+        ) : (
+          content
+        )}
       </ScrollViewLibrary>
     );
   },

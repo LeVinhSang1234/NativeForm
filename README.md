@@ -18,6 +18,7 @@ type Form = {
   validateMessages?: ValidateMessages; //Validation prompt template
   validateTrigger?: TriggerAction | 'onChange' | 'onBlur'; //Config field validate trigger
   onValuesChange?: (values: {[key: string]: any}) => void; //Trigger when value updated
+  keyboardManager?: boolean; //Keep the focused input above the keyboard using native code
   onFormDispose?: (info: {
     values: {[key: string]: any};
     errors: {[key: string]: string | undefined};
@@ -124,6 +125,38 @@ Config field validate trigger
 
 ```
 Trigger when value updated
+```
+
+- keyboardManager `<Boolean>`
+
+```tsx
+<Form.ScrollView form={form} keyboardManager>
+  <Form.Item name="email">
+    <Input />
+  </Form.Item>
+</Form.ScrollView>
+```
+
+```
+iOS only. Enable the native keyboard manager for this Form or Form.ScrollView. It
+follows the native first responder and moves or scrolls the form just enough to keep
+the focused input above the keyboard. No JavaScript focus or keyboard listeners are
+installed.
+
+On Android the prop renders a plain View and does nothing, the platform already keeps
+the focused input visible through the windowSoftInputMode of the activity.
+
+This prop only turns the manager on and off. Everything else (distance, accessory
+toolbar, keyboard appearance) is configured once on FormProvider with the
+keyboardManager config. <a href="#formprovider">Click to here</a>
+
+Requires React Native 0.78 or newer, the version that both consumes the
+codegenConfig ios.componentProvider entry of this package and ships React 19.
+
+The native module is autolinked. Run `pod install` after installing or upgrading the
+package on iOS, then rebuild the native application. The native view is declared with
+React Native Codegen and is a New Architecture/Fabric component only, it is not
+registered when the application runs with `newArchEnabled=false`.
 ```
 
 - onFormDispose `(info: { values, errors, isChanged }) => void`
@@ -466,6 +499,7 @@ type FormProviderProps = {
   requiredMarkStyle?: StyleProp<TextStyle>; // Global required mark style
   requiredMarkPosition?: 'before' | 'after'; // Global required mark position
   validateMessages?: ValidateMessages; // Global validation messages
+  keyboardManager?: KeyboardManagerConfig; // Global keyboard manager config
 };
 ```
 
@@ -509,6 +543,71 @@ Global required mark position
 
 ```
 Global validation messages
+```
+
+- keyboardManager `<KeyboardManagerConfig>`
+
+```ts
+//iOS only, every key is ignored on Android
+type KeyboardManagerConfig = {
+  distance?: number; //Space kept between the focused input and the bar or the keyboard. Default 12
+  toolbar?: boolean; //Show an accessory bar above the keyboard. Default false
+  toolbarDoneText?: string; //Label of the done button. Default 'Done'
+  toolbarPreviousNext?: boolean; //Show the arrows moving to the previous/next input. Default false
+  toolbarPlaceholder?: boolean; //Show the placeholder of the focused input inside the bar. Default false
+  toolbarTintColor?: ColorValue; //Color of the bar buttons
+  toolbarBarTintColor?: ColorValue; //Background color of the bar
+  keyboardAppearance?: 'default' | 'light' | 'dark'; //Force the keyboard appearance of every input inside the Form
+};
+```
+
+```ts
+- Default:
+
+const defaultKeyboardManager = {
+  distance: 12,
+  toolbar: false,
+  toolbarDoneText: 'Done',
+  toolbarPreviousNext: false,
+  toolbarPlaceholder: false,
+  toolbarTintColor: undefined, //Keep the native tint of the bar
+  toolbarBarTintColor: undefined, //Keep the native background of the bar
+  keyboardAppearance: undefined, //Keep the appearance each input asked for
+};
+```
+
+```tsx
+<FormProvider
+  keyboardManager={{
+    distance: 10,
+    toolbar: true,
+    toolbarDoneText: 'Done',
+    toolbarPreviousNext: true,
+    toolbarPlaceholder: true,
+    toolbarTintColor: '#0000ff',
+    toolbarBarTintColor: '#ffffff',
+    keyboardAppearance: 'light',
+  }}>
+  <App />
+</FormProvider>
+```
+
+```
+Configure the native keyboard manager once for every Form of the application.
+Turn it on per form with the keyboardManager prop of Form or Form.ScrollView,
+this config alone does nothing.
+
+Every key is merged over defaultKeyboardManager, so passing a partial config
+keeps the default of every key left out. Import defaultKeyboardManager from the
+package to read or spread those values.
+
+The whole config is iOS only, it drives the native view and its
+inputAccessoryView. Android ships no native code for this and ignores the
+config. The toolbar is never installed on an input that already carries an
+accessory view of the application.
+
+distance is measured from the top of the toolbar when the toolbar is on,
+because iOS reports the accessory view as part of the keyboard frame.
 ```
 
 ---

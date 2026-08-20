@@ -1654,6 +1654,30 @@ PODS:
     - React-logger (= 0.79.0)
     - React-perflogger (= 0.79.0)
     - React-utils (= 0.79.0)
+  - RNFormKeyboardManager (3.4.7):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - SocketRocket (0.7.1)
   - Yoga (0.0.0)
 
@@ -1729,6 +1753,7 @@ DEPENDENCIES:
   - ReactAppDependencyProvider (from `build/generated/ios`)
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - RNFormKeyboardManager (from `..`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -1875,6 +1900,8 @@ EXTERNAL SOURCES:
     :path: build/generated/ios
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  RNFormKeyboardManager:
+    :path: ".."
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -1946,11 +1973,12 @@ SPEC CHECKSUMS:
   React-timing: f379c1e5064513ce4ad6fe921b0f4e2b08463a40
   React-utils: 580be21e5e2ec17b0ac68161c2b4e33593af7ecc
   ReactAppDependencyProvider: 7f5052913dd72a0e84ca95973f9f8bc97f2c5b95
-  ReactCodegen: 16700ce5938fd79c1ff4c5b5735f10830f2e6bd3
+  ReactCodegen: bd5a8890e50e2d6bb67a7f1622b778cbd69f632c
   ReactCommon: 1257efa9d0b07517d8b79bb4055eaefac1204807
+  RNFormKeyboardManager: 64ae9829b306ecddf37709b9674bd66b812d67da
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 9773f1327b258fa449988c2e42fbb7cbdf655d96
 
-PODFILE CHECKSUM: d485eaebf3c0c5740abeefcf8fb290082a25ce53
+PODFILE CHECKSUM: 9176bd1db2e0fc36e59809d7ec5d35f291e46b7c
 
 COCOAPODS: 1.16.2

@@ -16,6 +16,7 @@ end
 
 target 'FormRn' do
   config = use_native_modules!
+  pod 'RNFormKeyboardManager', :path => '..'
 
   use_react_native!(
     :path => config[:reactNativePath],

@@ -1,4 +1,4 @@
-import React, {forwardRef, useCallback, useRef, PropsWithChildren} from 'react';
+import React, {forwardRef, useCallback, useRef} from 'react';
 import {defaultKeyboardManager, FormInstance, TForm} from './types';
 import {FormProvider, useFormContextGlobal} from './provider';
 import Item from './Item';
@@ -35,7 +35,7 @@ let formId = 0;
 const KeyboardManager = ({
   style,
   children,
-}: PropsWithChildren<{style?: StyleProp<ViewStyle>}>) => {
+}: React.PropsWithChildren<{style?: StyleProp<ViewStyle>}>) => {
   const {keyboardManager} = useFormContextGlobal();
   const config = {...defaultKeyboardManager, ...keyboardManager};
   return (
@@ -100,7 +100,7 @@ const Form = <T,>({
   style,
   keyboardManager,
   ...props
-}: PropsWithChildren<TForm<T>>) => {
+}: React.PropsWithChildren<TForm<T>>) => {
   const {
     requiredMark,
     requiredMarkPosition,
@@ -132,7 +132,7 @@ const Form = <T,>({
 
 const ScrollView = forwardRef<
   ScrollViewLibrary,
-  PropsWithChildren<Omit<TForm<any>, 'style'> & ScrollViewProps>
+  React.PropsWithChildren<Omit<TForm<any>, 'style'> & ScrollViewProps>
 >(
   (
     {

@@ -68,5 +68,15 @@
   "keywords": [
     "react native form",
     "rn-form"
-  ]
+  ],
+  "codegenConfig": {
+    "name": "RNFormKeyboardManagerSpec",
+    "type": "components",
+    "jsSrcsDir": "packages",
+    "ios": {
+      "componentProvider": {
+        "RNFormKeyboardManagerView": "RNFormKeyboardManagerView"
+      }
+    }
+  }
 }

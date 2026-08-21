@@ -35,6 +35,15 @@ export declare type Rule = {
   whitespace?: boolean; //Failed if only has whitespace
 };
 
+//What a Form.Item hands to its children, through useFormItem or the render prop
+export declare type FormItemHandle<V = any> = {
+  name: string;
+  value?: V;
+  error?: string;
+  onChangeValue: (value: V) => void;
+  onBlur: () => void;
+};
+
 export declare type FormItem<T = any, K extends keyof T = keyof T> = {
   name: K;
   label?: string; //Label text
@@ -49,14 +58,7 @@ export declare type FormItem<T = any, K extends keyof T = keyof T> = {
   labelStyle?: StyleProp<TextStyle>;
   getValueProps?: (v: T[K]) => any;
   normalize?: (v: any) => T[K];
-  children:
-    | ((handle: {
-        onChangeValue: (value: T[K]) => void;
-        onBlur: () => void;
-        value?: T[K];
-        error?: string;
-      }) => ReactNode)
-    | React.ReactNode;
+  children: ((handle: FormItemHandle<T[K]>) => ReactNode) | React.ReactNode;
 };
 
 export const defaultValidateMessages = {
@@ -83,7 +85,7 @@ export declare type KeyboardManagerConfig = {
 };
 
 export const defaultKeyboardManager: KeyboardManagerConfig = {
-  distance: 12,
+  distance: 20,
   toolbar: false,
   toolbarDoneText: 'Done',
   toolbarPreviousNext: false,

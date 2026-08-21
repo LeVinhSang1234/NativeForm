@@ -1,14 +1,11 @@
+import {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {FormItem, FormItemHandle, TItemValue, TriggerAction} from './types';
 import {
-  cloneElement,
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import {FormItem, TItemValue, TriggerAction} from './types';
-import {getNestedValue, useFormContext, useFormContextGlobal} from './provider';
+  FormItemContext,
+  getNestedValue,
+  useFormContext,
+  useFormContextGlobal,
+} from './provider';
 import {validate} from './validateItem';
 import {StyleSheet, Text as TextLibrary, View} from 'react-native';
 import TextError from './TextError';
@@ -148,22 +145,21 @@ const Item = <T = any, K extends keyof T = keyof T>({
     return requiredMark === true ? '*' : requiredMark;
   }, [requiredMark]);
 
-  const renderedChildren = useMemo(() => {
-    const v = getValueProps(itemValue.value);
-
-    if (typeof children === 'function') {
-      return children({onChangeValue, onBlur, ...itemValue, value: v});
-    }
-    return cloneElement(children as any, {
-      ...itemValue,
-      value: v,
+  const handle = useMemo<FormItemHandle>(
+    () => ({
+      name: nameStr,
+      value: getValueProps(itemValue.value),
+      error: itemValue.error,
       onChangeValue,
-      onBlur: e => {
-        onBlur?.();
-        (children as any)?.props.onBlur?.(e);
-      },
-    });
-  }, [children, itemValue, onChangeValue, onBlur, getValueProps]);
+      onBlur,
+    }),
+    [nameStr, getValueProps, itemValue, onChangeValue, onBlur],
+  );
+
+  const renderedChildren = useMemo(
+    () => (typeof children === 'function' ? children(handle) : children),
+    [children, handle],
+  );
 
   return (
     <View
@@ -187,7 +183,9 @@ const Item = <T = any, K extends keyof T = keyof T>({
           {colon ?? ''}
         </Text>
       ) : null}
-      {renderedChildren}
+      <FormItemContext.Provider value={handle}>
+        {renderedChildren}
+      </FormItemContext.Provider>
       <TextError
         error={itemValue.error}
         errorStyle={[errorStyle, itemErrorStyle]}

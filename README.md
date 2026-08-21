@@ -196,14 +196,15 @@ type FormItem = {
   style?: StyleProp<ViewStyle>;
   getValueProps?: (v: any) => any;
   normalize?: (v: any) => any;
-  children:
-    | ((handle: {
-        onChangeValue: (value: any) => any;
-        onBlur: () => any;
-        value?: any;
-        error?: string;
-      }) => ReactNode)
-    | React.ReactNode;
+  children: ((handle: FormItemHandle) => ReactNode) | React.ReactNode;
+};
+
+type FormItemHandle<V = any> = {
+  name: string;
+  value?: V;
+  error?: string;
+  onChangeValue: (value: V) => void;
+  onBlur: () => void;
 };
 ```
 
@@ -307,7 +308,23 @@ class App extends Component {
 }
 ```
 
-- children `<JSX.Element | ({onChangeValue, value, onBlur, error}) => any>`
+- children `<JSX.Element | (handle: FormItemHandle) => any>`
+
+```js
+//custom component reading the field with the hook
+import Form, {useFormItem} from '@rn-form/form';
+
+const Rating = () => {
+  const {value, error, onChangeValue, onBlur} = useFormItem<number>();
+  return <Stars value={value} onPress={onChangeValue} onEnd={onBlur} invalid={!!error} />;
+};
+
+<Form.Item name="rating" label="Rating">
+  <View style={styles.row}>
+    <Rating />
+  </View>
+</Form.Item>;
+```
 
 ```js
 //children was supported type of functional

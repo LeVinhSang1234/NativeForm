@@ -19,6 +19,7 @@ import {
   ValidateMessages,
   KeyboardManagerConfig,
   defaultKeyboardManager,
+  FormItemHandle,
 } from './types';
 import {validate} from './validateItem';
 import {LayoutRectangle, StyleProp, TextStyle} from 'react-native';
@@ -55,6 +56,15 @@ const FormContext = createContext<
 });
 
 export const useFormContext = () => useContext(FormContext);
+
+export const FormItemContext = createContext<FormItemHandle>({
+  name: '',
+  onChangeValue: () => null,
+  onBlur: () => null,
+});
+
+export const useFormItem = <V = any,>() =>
+  useContext(FormItemContext) as FormItemHandle<V>;
 
 const toNestedObject = (flat: Record<string, any>) => {
   const result: Record<string, any> = {};

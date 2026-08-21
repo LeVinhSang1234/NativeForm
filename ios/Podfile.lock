@@ -1654,7 +1654,7 @@ PODS:
     - React-logger (= 0.79.0)
     - React-perflogger (= 0.79.0)
     - React-utils (= 0.79.0)
-  - RNFormKeyboardManager (3.4.7):
+  - RNFormKeyboardManager (3.5.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1753,7 +1753,7 @@ DEPENDENCIES:
   - ReactAppDependencyProvider (from `build/generated/ios`)
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
-  - RNFormKeyboardManager (from `..`)
+  - "RNFormKeyboardManager (from `../node_modules/@rn-form/form`)"
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -1901,7 +1901,7 @@ EXTERNAL SOURCES:
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
   RNFormKeyboardManager:
-    :path: ".."
+    :path: "../node_modules/@rn-form/form"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -1973,12 +1973,12 @@ SPEC CHECKSUMS:
   React-timing: f379c1e5064513ce4ad6fe921b0f4e2b08463a40
   React-utils: 580be21e5e2ec17b0ac68161c2b4e33593af7ecc
   ReactAppDependencyProvider: 7f5052913dd72a0e84ca95973f9f8bc97f2c5b95
-  ReactCodegen: bd5a8890e50e2d6bb67a7f1622b778cbd69f632c
+  ReactCodegen: 16700ce5938fd79c1ff4c5b5735f10830f2e6bd3
   ReactCommon: 1257efa9d0b07517d8b79bb4055eaefac1204807
-  RNFormKeyboardManager: 64ae9829b306ecddf37709b9674bd66b812d67da
+  RNFormKeyboardManager: 848b42a31d24d767f1406914d1b497731542fd69
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 9773f1327b258fa449988c2e42fbb7cbdf655d96
 
-PODFILE CHECKSUM: 9176bd1db2e0fc36e59809d7ec5d35f291e46b7c
+PODFILE CHECKSUM: a190d39b99d4c170902dc5fe2e8aef0e6b674062
 
 COCOAPODS: 1.16.2

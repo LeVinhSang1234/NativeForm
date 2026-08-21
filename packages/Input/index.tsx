@@ -14,6 +14,7 @@ import {
   TextStyle,
   ViewStyle,
 } from 'react-native';
+import {useFormItem} from '../Form/provider';
 
 const PressAnimated = Animated.createAnimatedComponent(Pressable);
 
@@ -29,7 +30,7 @@ export declare type ITextInputProps = {
 };
 
 const Input = ({
-  error,
+  error: errorProp,
   onChangeValue,
   style,
   styleInput,
@@ -39,11 +40,18 @@ const Input = ({
   onChange,
   multiline,
   onChangeText,
-  value,
+  value: valueProp,
   onFocus,
   onBlur,
   ...props
 }: ITextInputProps & TextInputProps) => {
+  //Inside a Form.Item the item owns the value and the error, standalone the
+  //props do. name is only filled in by a Form.Item.
+  const item = useFormItem<string>();
+  const inItem = !!item.name;
+  const error = inItem ? item.error : errorProp;
+  const value = inItem ? item.value : valueProp;
+
   const [isFocus, setIsFocus] = useState(false);
   const [scheme, setScheme] = useState<ColorSchemeName>(
     Appearance.getColorScheme(),
@@ -80,9 +88,10 @@ const Input = ({
   const handleBlur = useCallback(
     (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
       onBlur?.(e);
+      item.onBlur?.();
       setIsFocus(false);
     },
-    [onBlur],
+    [onBlur, item],
   );
 
   const borderColor = useMemo(
@@ -100,10 +109,11 @@ const Input = ({
 
   const handleChangeText = useCallback(
     (t: string) => {
+      item.onChangeValue?.(t);
       onChangeValue?.(t);
       onChangeText?.(t);
     },
-    [onChangeValue, onChangeText],
+    [item, onChangeValue, onChangeText],
   );
 
   const color = scheme === 'dark' ? '#ffffff' : '#000000';

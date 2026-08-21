@@ -37,11 +37,6 @@ const KeyboardManager = ({
   children,
 }: PropsWithChildren<{style?: StyleProp<ViewStyle>}>) => {
   const {keyboardManager} = useFormContextGlobal();
-  // Android keeps the focused input visible through windowSoftInputMode, there
-  // is no native view to mount there.
-  if (Platform.OS !== 'ios') {
-    return <View style={style}>{children}</View>;
-  }
   const config = {...defaultKeyboardManager, ...keyboardManager};
   return (
     <KeyboardManagerView
@@ -126,8 +121,7 @@ const Form = <T,>({
       initialValues={props.initialValues ?? props.form?.initialValues}
     />
   );
-
-  if (keyboardManager) {
+  if (keyboardManager && Platform.OS === 'ios') {
     return (
       <KeyboardManager style={[styles.root, style]}>{content}</KeyboardManager>
     );
@@ -207,7 +201,7 @@ const ScrollView = forwardRef<
 
     return (
       <ScrollViewLibrary {...props} ref={innerRef}>
-        {keyboardManager ? (
+        {keyboardManager && Platform.OS === 'ios' ? (
           <KeyboardManager style={styles.root}>{content}</KeyboardManager>
         ) : (
           content

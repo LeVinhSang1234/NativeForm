@@ -18,6 +18,7 @@ import {
   TItemValue,
   ValidateMessages,
   KeyboardManagerConfig,
+  defaultKeyboardManager,
 } from './types';
 import {validate} from './validateItem';
 import {LayoutRectangle, StyleProp, TextStyle} from 'react-native';
@@ -510,16 +511,23 @@ type GlobalContext = {
   keyboardManager?: KeyboardManagerConfig; //Tune the native keyboard manager. Turn it on per Form with the keyboardManager prop
 };
 
-export const FormContextGlobal = createContext<GlobalContext>({});
+export const FormContextGlobal = createContext<GlobalContext>({
+  keyboardManager: defaultKeyboardManager,
+});
 
 export const useFormContextGlobal = () => useContext(FormContextGlobal);
 
 export const FormGlobalProvider = ({
   children,
+  keyboardManager,
   ...p
 }: PropsWithChildren<GlobalContext>) => {
   return (
-    <FormContextGlobal.Provider value={p}>
+    <FormContextGlobal.Provider
+      value={{
+        ...p,
+        keyboardManager: {...defaultKeyboardManager, ...keyboardManager},
+      }}>
       {children}
     </FormContextGlobal.Provider>
   );
